@@ -1,0 +1,11 @@
+RECIPE TomatoRice
+INGREDIENT rice = 2 cups
+INGREDIENT tomato = 3
+INGREDIENT oil = 2 tbsp
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(tomato)
+STEP add(rice)
+STEP cook(10 minutes)
+STEP serve()
