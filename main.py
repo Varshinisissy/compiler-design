@@ -1,62 +1,77 @@
 """
-main.py — RecipeLang Phase 1 Prototype Driver
-
-Runs the pipeline implemented so far:
-
-    Source Code (.recipe file)
-          |
-          v
-      [ LEXER ]  ->  Tokens
-          |
-          v
-      [ PARSER ] ->  Skeleton AST + Syntax Validation
-          |
-          v
-      Structured Summary Output   (Phase 1 stops here)
-
-Phase 2 will add: Semantic Analysis + full Symbol Table.
-Phase 3 will add: Intermediate Representation + Interpreter/Execution.
+main.py — RecipeLang Phase 2 Prototype Driver (FULL Phase 2 pipeline)
 """
 
 import sys
 from lexer import tokenize, LexicalError
 from parser import parse_source, SyntaxErrorRL
+from ast_visualizer import print_ast
+from semantic_analyzer import SemanticAnalyzer
+from ir_generator import generate_ir, format_ir_line
+from interpreter import execute
 
 
 def run(filepath: str):
-    with open(filepath, "r") as f:
-        source = f.read()
+    source = open(filepath, "r").read()
 
     print("=" * 60)
-    print(f"RecipeLang Phase 1 Prototype — processing '{filepath}'")
+    print(f"RecipeLang Phase 2 Prototype — processing '{filepath}'")
     print("=" * 60)
 
-    # ---- Stage 1: Lexical Analysis -----------------------------------
     print("\n[Stage 1] Lexical Analysis")
     try:
         tokens = tokenize(source)
     except LexicalError as e:
-        print(e)
+        print(f"  {e}")
         return
-
     print(f"  Total tokens generated: {len(tokens)}")
-    print("  Token stream:")
-    for tok in tokens:
-        if tok.type != "EOF":
-            print(f"    {tok.type:<10} {tok.value!r:<15} (line {tok.line})")
 
-    # ---- Stage 2: Syntax Analysis --------------------------------------
     print("\n[Stage 2] Syntax Analysis (Parsing)")
     try:
         ast = parse_source(source)
     except SyntaxErrorRL as e:
         print(f"  {e}")
         return
-
     print("  Syntax OK — input matches RecipeLang grammar.")
 
-    # ---- Stage 3: Structured Output (Phase 1 "meaningful output") -----
-    print("\n[Stage 3] Structured Recipe Summary (Phase 1 output)")
+    print("\n[AST] Abstract Syntax Tree")
+    print_ast(ast)
+
+    print("\n[Stage 3] Semantic Analysis")
+    analyzer = SemanticAnalyzer(ast)
+    symbol_table, errors = analyzer.analyze()
+
+    if errors:
+        print(f"  {len(errors)} semantic error(s) found:")
+        for err in errors:
+            print(f"    - {err}")
+        print("\n  Compilation stopped. Fix the semantic errors above and re-run.")
+        return
+    print("  Semantic OK — all ingredient references and values are valid.")
+
+    print("\n[Symbol Table]")
+    print(f"  {'Name':<10} {'Type':<11} {'Qty':<5} {'Unit':<8} Scope")
+    print(f"  {'-'*10} {'-'*11} {'-'*5} {'-'*8} {'-'*10}")
+    for entry in symbol_table.all_entries():
+        unit_str = entry.unit if entry.unit else "-"
+        print(f"  {entry.name:<10} {entry.type:<11} {entry.quantity:<5} {unit_str:<8} {entry.scope}")
+
+    print("\n[Stage 4] Intermediate Representation (IR)")
+    ir = generate_ir(ast, symbol_table)
+    for instr in ir:
+        print(format_ir_line(instr))
+
+    print("\n[Stage 5] Interpreter / Execution Engine")
+    env, log = execute(ir)
+    for line in log:
+        print(line)
+
+    print("\n[Runtime Environment] Total ingredient usage after execution")
+    for name, info in env.used_ingredients.items():
+        unit_str = f" {info['unit']}" if info["unit"] else ""
+        print(f"  {name}: {info['quantity']}{unit_str} used")
+
+    print("\n[Final Output] Structured Recipe Summary")
     print(f"  Recipe Name : {ast.name}")
     print(f"  Ingredients : {len(ast.ingredients)}")
     for ing in ast.ingredients:
@@ -72,9 +87,7 @@ def run(filepath: str):
                 arg_strs.append(f"{arg[1]} {arg[2]}")
         print(f"    {i}. {st.action}({', '.join(arg_strs)})")
 
-    print("\nNote: Ingredient-existence checks, duplicate-declaration checks,")
-    print("and quantity/time validity checks are SEMANTIC ANALYSIS tasks —")
-    print("planned for Phase 2, not implemented in this Phase 1 prototype.")
+    print("\nRecipe compiled and executed successfully.")
 
 
 if __name__ == "__main__":
