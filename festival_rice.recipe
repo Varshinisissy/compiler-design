@@ -1,0 +1,14 @@
+RECIPE FestivalRice
+SERVES 4
+INGREDIENT rice = 2 cups
+INGREDIENT oil = 2 tbsp
+INGREDIENT salt = 1 tsp
+
+STEP heat_pan()
+STEP heat_pan()
+STEP add(oil)
+STEP add(rice)
+REPEAT 3 STEP stir()
+STEP add(salt)
+REPEAT 2 STEP cook(5 minutes)
+STEP serve()

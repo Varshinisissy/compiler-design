@@ -15,7 +15,7 @@ import re
 # ---------------------------------------------------------------------------
 # Token specification (order matters — first match wins)
 # ---------------------------------------------------------------------------
-KEYWORDS = {"RECIPE", "INGREDIENT", "STEP"}
+KEYWORDS = {"RECIPE", "INGREDIENT", "STEP", "SERVES", "REPEAT", "DIET", "AVOID", "DEFINE", "END", "CALL"}
 
 UNITS = {"cups", "cup", "tbsp", "tsp", "g", "kg", "ml", "l", "pieces", "piece"}
 TIMEUNITS = {"minutes", "minute", "seconds", "second", "hours", "hour"}

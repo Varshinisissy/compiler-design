@@ -1,0 +1,11 @@
+RECIPE Clash
+DIET vegan
+INGREDIENT oil = 3 tbsp
+INGREDIENT rice = 1 cups
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(oil)
+STEP add(rice)
+STEP cook(5 minutes)
+STEP serve()

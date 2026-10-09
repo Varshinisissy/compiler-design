@@ -1,0 +1,7 @@
+RECIPE WrongOrder
+INGREDIENT rice = 2 cups
+INGREDIENT oil = 1 tbsp
+
+STEP add(rice)
+STEP serve()
+STEP cook(5 minutes)

@@ -1,0 +1,7 @@
+RECIPE BoiledEgg
+INGREDIENT egg = 2
+INGREDIENT water = 300 ml
+STEP boil(water)
+STEP add(egg)
+STEP cook(8 minutes)
+STEP serve()

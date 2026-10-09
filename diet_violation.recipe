@@ -1,0 +1,12 @@
+RECIPE BadVegan
+DIET vegan
+AVOID nuts
+INGREDIENT rice = 1 cups
+INGREDIENT butter = 2 tbsp
+INGREDIENT egg = 2
+INGREDIENT peanut = 3 tbsp
+STEP heat_pan()
+STEP add(butter)
+STEP add(rice)
+STEP cook(10 minutes)
+STEP serve()

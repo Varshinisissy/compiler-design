@@ -1,0 +1,7 @@
+RECIPE Bad
+INGREDIENT rice = 2 cups
+INGREDIENT rice = 1 cups
+INGREDIENT oil = 0 tbsp
+STEP add(salt)
+STEP cook(0 minutes)
+STEP serve()

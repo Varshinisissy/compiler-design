@@ -1,5 +1,30 @@
 """
 main.py — RecipeLang Phase 2 Prototype Driver (FULL Phase 2 pipeline)
+
+Implements every component listed under Section 10.2 of the manual:
+
+    Source Code (.recipe file)
+          |
+          v
+      [ LEXER ]              -> Tokens
+          |
+          v
+      [ PARSER ]              -> AST (construction)
+          |
+          v
+      [ AST VISUALIZER ]      -> ASCII tree (traversal + visualization)
+          |
+          v
+      [ SEMANTIC ANALYZER ]   -> Symbol Table + semantic error list
+          |
+          v
+      [ IR GENERATOR ]         -> Intermediate Representation
+          |
+          v
+      [ INTERPRETER ]           -> Execution log + runtime environment
+          |
+          v
+      Final Structured Output
 """
 
 import sys
@@ -18,6 +43,7 @@ def run(filepath: str):
     print(f"RecipeLang Phase 2 Prototype — processing '{filepath}'")
     print("=" * 60)
 
+    # ---- Stage 1: Lexical Analysis -----------------------------------
     print("\n[Stage 1] Lexical Analysis")
     try:
         tokens = tokenize(source)
@@ -26,6 +52,7 @@ def run(filepath: str):
         return
     print(f"  Total tokens generated: {len(tokens)}")
 
+    # ---- Stage 2: Syntax Analysis (builds the AST) ----------------------
     print("\n[Stage 2] Syntax Analysis (Parsing)")
     try:
         ast = parse_source(source)
@@ -34,9 +61,11 @@ def run(filepath: str):
         return
     print("  Syntax OK — input matches RecipeLang grammar.")
 
+    # ---- AST Visualization (traversal + visualization) -------------------
     print("\n[AST] Abstract Syntax Tree")
     print_ast(ast)
 
+    # ---- Stage 3: Semantic Analysis --------------------------------------
     print("\n[Stage 3] Semantic Analysis")
     analyzer = SemanticAnalyzer(ast)
     symbol_table, errors = analyzer.analyze()
@@ -49,6 +78,7 @@ def run(filepath: str):
         return
     print("  Semantic OK — all ingredient references and values are valid.")
 
+    # ---- Symbol Table -----------------------------------------------------
     print("\n[Symbol Table]")
     print(f"  {'Name':<10} {'Type':<11} {'Qty':<5} {'Unit':<8} Scope")
     print(f"  {'-'*10} {'-'*11} {'-'*5} {'-'*8} {'-'*10}")
@@ -56,11 +86,13 @@ def run(filepath: str):
         unit_str = entry.unit if entry.unit else "-"
         print(f"  {entry.name:<10} {entry.type:<11} {entry.quantity:<5} {unit_str:<8} {entry.scope}")
 
+    # ---- Stage 4: Intermediate Representation ------------------------------
     print("\n[Stage 4] Intermediate Representation (IR)")
     ir = generate_ir(ast, symbol_table)
     for instr in ir:
         print(format_ir_line(instr))
 
+    # ---- Stage 5: Interpreter / Execution Engine ---------------------------
     print("\n[Stage 5] Interpreter / Execution Engine")
     env, log = execute(ir)
     for line in log:
@@ -71,6 +103,7 @@ def run(filepath: str):
         unit_str = f" {info['unit']}" if info["unit"] else ""
         print(f"  {name}: {info['quantity']}{unit_str} used")
 
+    # ---- Final Output -------------------------------------------------------
     print("\n[Final Output] Structured Recipe Summary")
     print(f"  Recipe Name : {ast.name}")
     print(f"  Ingredients : {len(ast.ingredients)}")

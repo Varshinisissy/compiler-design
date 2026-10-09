@@ -1,0 +1,12 @@
+RECIPE Messy
+INGREDIENT rice = 2 cups
+INGREDIENT oil = 2 tbsp
+INGREDIENT salt = 1 tsp
+STEP heat_pan()
+STEP heat_pan()
+STEP add(oil)
+STEP add(rice)
+STEP cook(5 minutes)
+STEP cook(5 minutes)
+STEP serve()
+STEP add(rice)
