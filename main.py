@@ -118,7 +118,8 @@ def run(filepath: str):
                 arg_strs.append(arg[1])
             else:
                 arg_strs.append(f"{arg[1]} {arg[2]}")
-        print(f"    {i}. {st.action}({', '.join(arg_strs)})")
+        label = getattr(st, "action", None) or f"CALL {st.name}"
+        print(f"    {i}. {label}({', '.join(arg_strs)})")
 
     print("\nRecipe compiled and executed successfully.")
 

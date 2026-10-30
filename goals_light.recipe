@@ -1,0 +1,20 @@
+RECIPE LightLentilRice
+SERVES 2
+PROTECT lentils
+ENSURE calories_per_serving <= 620
+ENSURE protein_per_serving >= 14
+ENSURE cook_time <= 20 minutes
+INGREDIENT rice = 3 cups
+INGREDIENT lentils = 2 cups
+INGREDIENT oil = 4 tbsp
+INGREDIENT onion = 2
+INGREDIENT salt = 1 tsp
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(onion)
+STEP add(rice)
+STEP add(lentils)
+STEP add(salt)
+STEP cook(30 minutes)
+STEP serve()

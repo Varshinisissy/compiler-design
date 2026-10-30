@@ -1,0 +1,13 @@
+RECIPE BrokenRice
+SERVES 2
+INGREDIANT rice = 2 cups
+INGREDIENT tomato 3
+INGREDIENT oil = 0 tbsp
+INGREDIENT rice = 1 cups
+step add(oil)
+STEP add(tomatto)
+STEP add(salt)
+STEP add(rice)
+STEP cook(0 minutes)@
+STEP serve
+STEP stir()

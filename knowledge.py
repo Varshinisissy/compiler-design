@@ -59,3 +59,35 @@ def kcal_of(name, quantity, unit):
     if not entry or unit not in entry["kcal"]:
         return None
     return entry["kcal"][unit] * quantity
+
+
+# ---------------------------------------------------------------------------
+# Protein (grams per 1 unit) and alternative ingredients - used by contracts.py
+# ---------------------------------------------------------------------------
+PROTEIN = {
+    "rice": {"cups": 4.3}, "oil": {"tbsp": 0}, "tomato": {None: 1}, "onion": {None: 1},
+    "potato": {None: 4}, "salt": {"tsp": 0}, "water": {"ml": 0, "cups": 0},
+    "sugar": {"tsp": 0, "tbsp": 0}, "lentils": {"cups": 18}, "egg": {None: 6},
+    "butter": {"tbsp": 0}, "milk": {"cups": 8, "ml": 0.034}, "paneer": {"g": 0.18},
+    "cheese": {"g": 0.25}, "chicken": {"g": 0.27}, "fish": {"g": 0.22},
+    "peanut": {"tbsp": 4}, "almond": {"tbsp": 2}, "flour": {"cups": 13},
+    "pasta": {"cups": 8}, "bread": {None: 3}, "tofu": {"g": 0.08, None: 9},
+    "sesame": {"tbsp": 1.6}, "soy_milk": {"cups": 7, "ml": 0.03},
+    "rice_flour": {"cups": 9},
+}
+
+# ingredient -> possible swaps the tuner may try (any must be unit-compatible)
+ALTS = {
+    "rice": ["lentils"], "butter": ["oil"], "cheese": ["paneer", "tofu"],
+    "paneer": ["tofu"], "chicken": ["fish", "tofu"], "pasta": ["rice", "lentils"],
+    "flour": ["rice_flour"], "milk": ["soy_milk"], "egg": ["tofu"],
+    "peanut": ["almond", "sesame"],
+}
+
+
+def protein_of(name, quantity, unit):
+    """Protein (g) for this amount, or None if unknown."""
+    entry = PROTEIN.get(name)
+    if not entry or unit not in entry:
+        return None
+    return entry[unit] * quantity

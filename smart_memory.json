@@ -1,0 +1,397 @@
+{
+ "pass_gain": {},
+ "recipes": {
+  "AlooCurry": {
+   "cook": 22.0,
+   "ing": {
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "onion": [
+     1,
+     null
+    ],
+    "potato": [
+     4,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "tomato": [
+     2,
+     null
+    ]
+   },
+   "serves": 3
+  },
+  "BoiledPotato": {
+   "cook": 20.0,
+   "ing": {
+    "potato": [
+     3,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "water": [
+     1,
+     "l"
+    ]
+   },
+   "serves": 2
+  },
+  "ChickenCurry": {
+   "cook": 30.0,
+   "ing": {
+    "chicken": [
+     500,
+     "g"
+    ],
+    "oil": [
+     3,
+     "tbsp"
+    ],
+    "onion": [
+     2,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "tomato": [
+     3,
+     null
+    ]
+   },
+   "serves": 4
+  },
+  "ChickenFry": {
+   "cook": 25.0,
+   "ing": {
+    "chicken": [
+     300,
+     "g"
+    ],
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ]
+   },
+   "serves": 2
+  },
+  "Dal": {
+   "cook": 30.0,
+   "ing": {
+    "lentils": [
+     2,
+     "cups"
+    ],
+    "oil": [
+     1,
+     "tbsp"
+    ],
+    "onion": [
+     1,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "tomato": [
+     2,
+     null
+    ],
+    "water": [
+     800,
+     "ml"
+    ]
+   },
+   "serves": 4
+  },
+  "EggCurry": {
+   "cook": 15.0,
+   "ing": {
+    "egg": [
+     4,
+     null
+    ],
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "onion": [
+     2,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "tomato": [
+     3,
+     null
+    ]
+   },
+   "serves": 3
+  },
+  "EggOmelette": {
+   "cook": 6.0,
+   "ing": {
+    "butter": [
+     1,
+     "tbsp"
+    ],
+    "egg": [
+     3,
+     null
+    ],
+    "onion": [
+     1,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ]
+   },
+   "serves": 1
+  },
+  "FishFry": {
+   "cook": 10.0,
+   "ing": {
+    "fish": [
+     250,
+     "g"
+    ],
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ]
+   },
+   "serves": 2
+  },
+  "FriedRice": {
+   "cook": 12.0,
+   "ing": {
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "onion": [
+     1,
+     null
+    ],
+    "rice": [
+     2,
+     "cups"
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ]
+   },
+   "serves": 2
+  },
+  "Kheer": {
+   "cook": 25.0,
+   "ing": {
+    "milk": [
+     3,
+     "cups"
+    ],
+    "rice": [
+     1,
+     "cups"
+    ],
+    "sugar": [
+     3,
+     "tbsp"
+    ]
+   },
+   "serves": 4
+  },
+  "LentilSoupBig": {
+   "cook": 25.0,
+   "ing": {
+    "lentils": [
+     1,
+     "cups"
+    ],
+    "oil": [
+     1,
+     "tbsp"
+    ],
+    "onion": [
+     2,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "water": [
+     600,
+     "ml"
+    ]
+   },
+   "serves": 3
+  },
+  "PaneerMasala": {
+   "cook": 14.0,
+   "ing": {
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "onion": [
+     2,
+     null
+    ],
+    "paneer": [
+     200,
+     "g"
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "tomato": [
+     2,
+     null
+    ]
+   },
+   "serves": 3
+  },
+  "PlainRice": {
+   "cook": 15.0,
+   "ing": {
+    "oil": [
+     1,
+     "tbsp"
+    ],
+    "rice": [
+     3,
+     "cups"
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "water": [
+     500,
+     "ml"
+    ]
+   },
+   "serves": 3
+  },
+  "PotatoFry": {
+   "cook": 18.0,
+   "ing": {
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "onion": [
+     1,
+     null
+    ],
+    "potato": [
+     3,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ]
+   },
+   "serves": 2
+  },
+  "Scramble": {
+   "cook": 5.0,
+   "ing": {
+    "butter": [
+     1,
+     "tbsp"
+    ],
+    "egg": [
+     4,
+     null
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ]
+   },
+   "serves": 2
+  },
+  "TomatoPasta": {
+   "cook": 15.0,
+   "ing": {
+    "oil": [
+     1,
+     "tbsp"
+    ],
+    "pasta": [
+     2,
+     "cups"
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "tomato": [
+     3,
+     null
+    ],
+    "water": [
+     1,
+     "l"
+    ]
+   },
+   "serves": 2
+  },
+  "TomatoRiceBig": {
+   "cook": 18.0,
+   "ing": {
+    "oil": [
+     2,
+     "tbsp"
+    ],
+    "onion": [
+     2,
+     null
+    ],
+    "rice": [
+     3,
+     "cups"
+    ],
+    "salt": [
+     1,
+     "tsp"
+    ],
+    "tomato": [
+     4,
+     null
+    ]
+   },
+   "serves": 4
+  }
+ },
+ "runs": 0,
+ "strategy": {}
+}

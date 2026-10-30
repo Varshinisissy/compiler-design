@@ -105,6 +105,11 @@ def unparse(recipe):
         lines.append(f"DIET {recipe.diet}")
     for a in recipe.avoid:
         lines.append(f"AVOID {a}")
+    for name in getattr(recipe, "protect", []):
+        lines.append(f"PROTECT {name}")
+    for c in getattr(recipe, "contracts", []):
+        unit = f" {c.unit}" if c.unit else ""
+        lines.append(f"ENSURE {c.metric} {c.op} {c.value}{unit}")
     for ing in recipe.ingredients:
         unit = f" {ing.unit}" if ing.unit else ""
         lines.append(f"INGREDIENT {ing.name} = {ing.quantity}{unit}")

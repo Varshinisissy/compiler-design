@@ -1,0 +1,13 @@
+RECIPE ImpossibleDiet
+SERVES 1
+PROTECT rice
+PROTECT oil
+ENSURE calories_per_serving <= 100
+INGREDIENT rice = 2 cups
+INGREDIENT oil = 2 tbsp
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(rice)
+STEP cook(10 minutes)
+STEP serve()

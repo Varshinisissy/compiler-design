@@ -1,0 +1,10 @@
+RECIPE BadGoals
+PROTECT ghost
+ENSURE sweetness <= 5
+ENSURE calories_per_serving <= 300
+ENSURE cook_time <= 20
+INGREDIENT rice = 1 cups
+STEP heat_pan()
+STEP add(rice)
+STEP cook(5 minutes)
+STEP serve()

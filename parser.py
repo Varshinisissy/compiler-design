@@ -37,6 +37,8 @@ class RecipeNode:
         self.diet = None        # optional: DIET <vegetarian|vegan>
         self.avoid = []         # optional: AVOID <allergen> (repeatable)
         self.procedures = []    # list of ProcNode (DEFINE ... END)
+        self.contracts = []     # optional: ENSURE <metric> <op> <value> (repeatable)
+        self.protect = []       # optional: PROTECT <ingredient> (tuner must not touch it)
 
     def __repr__(self):
         return f"Recipe({self.name})"
@@ -50,6 +52,20 @@ class IngredientNode:
 
     def __repr__(self):
         return f"Ingredient({self.name}={self.quantity}{' ' + self.unit if self.unit else ''})"
+
+
+class ContractNode:
+    """ENSURE calories_per_serving <= 400  - a goal the finished recipe must meet."""
+    def __init__(self, metric, op, value, unit, line):
+        self.metric = metric
+        self.op = op
+        self.value = value
+        self.unit = unit    # optional unit written after the number (kcal / g / minutes ...)
+        self.line = line
+
+    def __repr__(self):
+        u = f" {self.unit}" if self.unit else ""
+        return f"Contract({self.metric} {self.op} {self.value}{u})"
 
 
 class StepNode:
@@ -118,14 +134,20 @@ class Parser:
 
         # optional header lines, in any order:
         #   "SERVES" <number> | "DIET" <identifier> | "AVOID" <identifier>
-        while self.current().type == "KEYWORD" and self.current().value in ("SERVES", "DIET", "AVOID"):
+        #   | "PROTECT" <identifier> | "ENSURE" <metric> <op> <number> [ <unit> ]
+        while self.current().type == "KEYWORD" and self.current().value in (
+                "SERVES", "DIET", "AVOID", "ENSURE", "PROTECT"):
             kw = self.advance().value
             if kw == "SERVES":
                 recipe.serves = int(self.expect("NUMBER").value)
             elif kw == "DIET":
                 recipe.diet = self.expect("IDENT").value
-            else:
+            elif kw == "AVOID":
                 recipe.avoid.append(self.expect("IDENT").value)
+            elif kw == "PROTECT":
+                recipe.protect.append(self.expect("IDENT").value)
+            else:
+                recipe.contracts.append(self.parse_contract())
 
         while self.current().type == "KEYWORD" and self.current().value == "INGREDIENT":
             recipe.ingredients.append(self.parse_ingredient())
@@ -149,6 +171,18 @@ class Parser:
             )
 
         return recipe
+
+    # <contract> ::= "ENSURE" <metric> <op> <number> [ <unit> | <timeunit> | "kcal" ]
+    def parse_contract(self):
+        line = self.tokens[self.pos - 1].line
+        metric = self.expect("IDENT").value
+        op = self.expect("OP").value
+        value = int(self.expect("NUMBER").value)
+        unit = None
+        if self.current().type in ("UNIT", "TIMEUNIT") or (
+                self.current().type == "IDENT" and self.current().value == "kcal"):
+            unit = self.advance().value
+        return ContractNode(metric, op, value, unit, line)
 
     # <ingredient_decl> ::= "INGREDIENT" <identifier> "=" <number> [ <unit> ]
     def parse_ingredient(self):

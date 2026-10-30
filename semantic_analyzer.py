@@ -87,6 +87,7 @@ class SemanticAnalyzer:
         self._check_steps()
         self._check_extensions()
         self._check_constraints()
+        self._check_contracts()
         # the same mistake can appear once per expanded CALL: report it only once
         unique, seen = [], set()
         for e in self.errors:
@@ -185,3 +186,34 @@ class SemanticAnalyzer:
                     self.errors.append(SemanticError(
                         f"Semantic Error: ingredient '{ing.name}' is tagged '{tag}', "
                         f"which violates {forbidden[tag]}{hint}"))
+
+    # --- Rules 9 and 10: ENSURE contracts and PROTECT declarations ----------
+    def _check_contracts(self):
+        from contracts import METRICS, OPS, TIME_TO_MIN
+        recipe = self.recipe
+        for c in recipe.contracts:
+            where = f"ENSURE {c.metric} (line {c.line})"
+            if c.metric not in METRICS:
+                self.errors.append(SemanticError(
+                    f"Semantic Error: {where}: unknown metric "
+                    f"(allowed: {', '.join(sorted(METRICS))})"))
+                continue
+            if c.op not in OPS:
+                self.errors.append(SemanticError(
+                    f"Semantic Error: {where}: unknown operator '{c.op}'"))
+            if c.metric.endswith("_per_serving") and recipe.serves is None:
+                self.errors.append(SemanticError(
+                    f"Semantic Error: {where}: needs a SERVES line to compute per-serving values"))
+            if c.metric == "cook_time" and c.unit not in TIME_TO_MIN:
+                self.errors.append(SemanticError(
+                    f"Semantic Error: {where}: cook_time needs a time unit, e.g. 20 minutes"))
+            if c.metric != "cook_time" and c.unit in TIME_TO_MIN:
+                self.errors.append(SemanticError(
+                    f"Semantic Error: {where}: a time unit only makes sense for cook_time"))
+            if c.value <= 0:
+                self.errors.append(SemanticError(
+                    f"Semantic Error: {where}: the target value must be positive"))
+        for name in recipe.protect:
+            if not self.symbol_table.exists(name):
+                self.errors.append(SemanticError(
+                    f"Semantic Error: PROTECT '{name}' refers to an ingredient that was never declared"))

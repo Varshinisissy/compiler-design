@@ -15,13 +15,15 @@ import re
 # ---------------------------------------------------------------------------
 # Token specification (order matters — first match wins)
 # ---------------------------------------------------------------------------
-KEYWORDS = {"RECIPE", "INGREDIENT", "STEP", "SERVES", "REPEAT", "DIET", "AVOID", "DEFINE", "END", "CALL"}
+KEYWORDS = {"RECIPE", "INGREDIENT", "STEP", "SERVES", "REPEAT", "DIET", "AVOID", "DEFINE", "END", "CALL",
+            "ENSURE", "PROTECT"}
 
 UNITS = {"cups", "cup", "tbsp", "tsp", "g", "kg", "ml", "l", "pieces", "piece"}
 TIMEUNITS = {"minutes", "minute", "seconds", "second", "hours", "hour"}
 
 TOKEN_SPEC = [
     ("NUMBER",      r"\d+"),
+    ("OP",          r"<=|>=|==|<|>"),
     ("ASSIGN",      r"="),
     ("LPAREN",      r"\("),
     ("RPAREN",      r"\)"),

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RecipeLang Kitchen Compiler</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f0;--sf:#fff;--ink:#15302b;--mute:#5d7770;--line:#cfdcd7;--ac:#0f6b5c;--aci:#fff;--warn:#b4531a;--bad:#b3261e;--ok:#177a46;--chip:#e1ece8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a18;--sf:#162421;--ink:#e3efeb;--mute:#8fa8a1;--line:#2a3f3a;--ac:#4fc3ac;--aci:#06211b;--warn:#f0a36b;--bad:#ff8f86;--ok:#6fdc9d;--chip:#203430}}
+:root[data-theme="dark"]{--bg:#0f1a18;--sf:#162421;--ink:#e3efeb;--mute:#8fa8a1;--line:#2a3f3a;--ac:#4fc3ac;--aci:#06211b;--warn:#f0a36b;--bad:#ff8f86;--ok:#6fdc9d;--chip:#203430}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+textarea,pre,.m,.tok{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
+header,main,.line{max-width:1280px;margin:0 auto;padding-left:20px;padding-right:20px}
+header{padding-top:28px}h1{font-size:clamp(2.2rem,6vw,4rem);line-height:.95;margin:0 0 8px;font-weight:800;letter-spacing:-.035em}
+header p{margin:0;color:var(--mute);max-width:62ch}
+.line{display:flex;gap:0;overflow-x:auto;padding-top:18px;padding-bottom:6px}
+.sg{flex:1 0 118px;padding:8px 10px;border:1px solid var(--line);background:var(--sf);margin-left:-1px;transition:background .3s}
+.sg:first-child{border-radius:10px 0 0 10px;margin-left:0}.sg:last-child{border-radius:0 10px 10px 0}
+.sg b{display:block;font-size:.9rem}.sg span{font-size:.78rem;color:var(--mute)}
+.sg.ok{background:var(--chip);box-shadow:inset 0 -3px var(--ok)}.sg.fail{box-shadow:inset 0 -3px var(--bad)}.sg.fail b{color:var(--bad)}
+main{padding-top:12px;padding-bottom:40px;display:grid;gap:16px;grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.pn{background:var(--sf);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line)}.sp{flex:1}
+select,button,input{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--sf);color:var(--ink);border-radius:6px;padding:6px 10px;cursor:pointer}
+input{cursor:text;width:84px}button.run{background:var(--ac);color:var(--aci);border-color:var(--ac);font-weight:600}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.ed{display:flex;height:440px}.gut{padding:12px 8px;text-align:right;color:var(--mute);font-size:.85rem;line-height:1.6;background:var(--bg);min-width:38px;white-space:pre;overflow:hidden;font-family:"JetBrains Mono",monospace}
+.gut .e{color:var(--bad);font-weight:700}
+textarea{flex:1;border:0;resize:none;padding:12px;font-size:.85rem;line-height:1.6;background:var(--sf);color:var(--ink);white-space:pre;overflow:auto;min-width:0}textarea:focus{outline:none}
+.tabs{display:flex;border-bottom:1px solid var(--line);overflow-x:auto}.tabs button{border:0;border-radius:0;background:none;padding:10px 14px;color:var(--mute);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ac);font-weight:600}
+.view{padding:14px;min-height:440px;max-height:640px;overflow:auto}
+.err,.wn,.fx{border-left:3px solid var(--bad);background:var(--chip);padding:8px 12px;margin:0 0 8px;border-radius:0 6px 6px 0;font-size:.92rem}
+.wn{border-color:var(--warn)}.fx{border-color:var(--ok)}.err b{color:var(--bad)}
+.hint{color:var(--mute);font-size:.9rem;margin:0 0 8px}.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.85rem}th,td{text-align:left;padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--mute);font-weight:600}
+.tok{display:inline-block;padding:0 6px;border-radius:4px;background:var(--chip);font-size:.78rem}.tok.KEYWORD{color:var(--ac);font-weight:600}.tok.NUMBER,.tok.UNIT,.tok.TIMEUNIT{color:var(--warn)}
+pre{margin:0 0 10px;font-size:.82rem;line-height:1.55}h3{margin:16px 0 6px;font-size:1.05rem}h3:first-child{margin-top:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.two{grid-template-columns:1fr}}
+.kit{display:flex;gap:16px;align-items:center;margin:8px 0 12px}
+.pan{width:96px;height:96px;border-radius:50%;border:8px solid var(--line);display:grid;place-items:center;font-size:.8rem;font-weight:600;color:var(--mute);transition:all .4s;flex:none}
+.pan.HOT{border-color:var(--warn);color:var(--warn);box-shadow:0 0 26px var(--warn)}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:1px 10px;margin:2px;font-size:.85rem}.chip.g{color:var(--ok)}
+ol.s{margin:0;padding-left:1.5em}ol.s li{padding:2px 0;color:var(--mute)}ol.s li.d{color:var(--ink)}ol.s li.c{color:var(--ac);font-weight:700}
+.card{border:1px dashed var(--line);border-radius:8px;padding:12px 16px}
+body{transition:background .5s}
+body[data-diet=vegan]{--ac:#2b9a46;background:color-mix(in srgb,var(--bg) 86%,#3ecf6a)}
+body[data-diet=vegetarian]{--ac:#c77d0a;background:color-mix(in srgb,var(--bg) 86%,#f2b84b)}
+@media(prefers-color-scheme:dark){body[data-diet=vegan]{--ac:#6fdc7e}body[data-diet=vegetarian]{--ac:#f2b84b}}
+body[data-diet] h1{color:var(--ac)}
+body[data-diet=vegan] header p::after{content:" 🌱 Vegan mode: dairy, egg, fish and meat are blocked.";color:var(--ac);font-weight:600}
+body[data-diet=vegetarian] header p::after{content:" 🥕 Vegetarian mode: fish and meat are blocked.";color:var(--ac);font-weight:600}
+.dietb{display:inline-block;border:1.5px solid var(--ac);color:var(--ac);border-radius:99px;padding:3px 14px;font-weight:600;font-size:.9rem;margin:0 0 8px}
+.nbar{display:flex;height:30px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.nbar span{background:var(--ac);color:var(--aci);font-size:.72rem;padding:5px 6px;overflow:hidden;white-space:nowrap;border-right:1px solid var(--sf)}
+.chip.tg{color:var(--warn);font-size:.72rem;padding:0 8px}
+.sec{border-left:4px solid var(--ok);background:var(--chip);padding:8px 12px;margin:0 0 10px;border-radius:0 8px 8px 0}.sec.w{border-color:var(--warn)}.sec h3{margin:0 0 4px;font-size:.95rem}.sec ul{margin:0;padding-left:18px}.sec li{margin:2px 0;font-size:.9rem}.sec pre{margin:6px 0 0}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:.78rem;font-weight:700;background:var(--sf)}.pill.pass{color:var(--ok)}.pill.fail{color:var(--bad)}.mute{color:var(--mute);font-size:.85rem}
+</style></head><body>
+<header><h1>RecipeLang<br>Kitchen Compiler</h1>
+<p>A recipe goes in as code. Eight stages check it, optimize it, run it in a virtual kitchen, and write a program and recipe card back out.</p></header>
+<div class="line" id="line"></div>
+<main>
+<section class="pn" aria-label="Editor">
+<div class="bar"><select id="ex" aria-label="Example"></select><label class="hint" style="margin:0" for="sv">Servings</label><input id="sv" type="number" min="1" placeholder="base"><select id="dt" aria-label="Diet"><option value="">Diet: none</option><option value="vegan">Diet: vegan</option><option value="vegetarian">Diet: vegetarian</option></select><span class="sp"></span><button class="run" id="run">Compile</button></div>
+<div class="ed"><div class="gut" id="gut"></div><textarea id="src" spellcheck="false" aria-label="RecipeLang source"></textarea></div>
+</section>
+<section class="pn" aria-label="Results"><div class="tabs" id="tabs" role="tablist"></div><div class="view" id="view"></div></section>
+</main>
+<script>
+const KW=new Set("RECIPE INGREDIENT STEP SERVES REPEAT DIET AVOID DEFINE END CALL".split(" "));
+const UN=new Set("cups cup tbsp tsp g kg ml l pieces piece".split(" ")),TU=new Set("minutes minute seconds second hours hour".split(" "));
+const RX=/(\d+)|(=)|(\()|(\))|(,)|(\n)|([ \t\r]+)|([A-Za-z_][A-Za-z0-9_]*)|(.)/gy,KD=[0,"NUMBER","ASSIGN","LPAREN","RPAREN","COMMA","NEWLINE","SKIP","IDENT","MISMATCH"];
+class E extends Error{constructor(p,m,l){super(m);this.phase=p;this.line=l}}
+const KB={rice:["",{cups:200}],oil:["",{tbsp:120}],tomato:["",{_:22}],onion:["",{_:40}],potato:["",{_:160}],salt:["",{tsp:0}],water:["",{ml:0,cups:0}],sugar:["",{tsp:16,tbsp:48}],lentils:["",{cups:230}],egg:["egg",{_:70}],butter:["dairy",{tbsp:100}],milk:["dairy",{cups:150,ml:.6}],paneer:["dairy",{g:3}],cheese:["dairy",{g:4}],chicken:["meat",{g:1.65}],fish:["fish",{g:1.2}],peanut:["nuts",{tbsp:95}],almond:["nuts",{tbsp:50}],flour:["gluten",{cups:455}],pasta:["gluten",{cups:220}],bread:["gluten",{_:80}],tofu:["",{g:1.45,_:90}],sesame:["",{tbsp:52}],soy_milk:["",{cups:100,ml:.4}],rice_flour:["",{cups:580}]};
+const SUB={dairy:"oil",egg:"tofu",nuts:"sesame",meat:"tofu",fish:"tofu",gluten:"rice"};
+function tokenize(s){const o=[];let ln=1,ls=0,m;RX.lastIndex=0;
+ while(RX.lastIndex<s.length&&(m=RX.exec(s))){let k=KD[m.findIndex((x,i)=>i&&x!==undefined)],v=m[0];
+  if(k==="NEWLINE"){ln++;ls=RX.lastIndex;continue}if(k==="SKIP")continue;
+  if(k==="MISMATCH")throw new E("Lexical",`Unexpected character “${v}” at column ${m.index-ls+1}.`,ln);
+  if(k==="IDENT")k=KW.has(v)?"KEYWORD":UN.has(v)?"UNIT":TU.has(v)?"TIMEUNIT":"IDENT";
+  o.push({type:k,value:v,line:ln})}
+ o.push({type:"EOF",value:"",line:ln});return o}
+function parse(T){let p=0;const cur=()=>T[p],adv=()=>T[p++],sh=t=>t.type==="EOF"?"end of file":`${t.type} “${t.value}”`;
+ const ex=(ty,v)=>{const t=cur();if(t.type!==ty||(v&&t.value!==v))throw new E("Syntax",`Expected ${v?`“${v}”`:ty} but found ${sh(t)}.`,t.line);return adv()};
+ const kw=v=>cur().type==="KEYWORD"&&cur().value===v;
+ const arg=()=>{const t=cur();if(t.type==="IDENT"){adv();return{kind:"ref",name:t.value}}
+  if(t.type==="NUMBER"){adv();return{kind:"time",n:+t.value,unit:ex("TIMEUNIT").value}}
+  throw new E("Syntax",`Invalid argument ${sh(t)}. Use a name or a time like 10 minutes.`,t.line)};
+ const args=()=>{const a=[];ex("LPAREN");if(cur().type!=="RPAREN"){a.push(arg());while(cur().type==="COMMA"){adv();a.push(arg())}}ex("RPAREN");return a};
+ const step=()=>{const k=ex("KEYWORD","STEP"),a=ex("IDENT");return{t:"step",action:a.value,args:args(),line:k.line}};
+ const item=()=>{const t=cur();if(kw("STEP"))return step();
+  if(kw("REPEAT")){adv();const n=+ex("NUMBER").value;return{t:"repeat",n,step:step(),line:t.line}}
+  if(kw("CALL")){adv();const n=ex("IDENT");return{t:"call",name:n.value,args:args(),line:t.line}}
+  throw new E("Syntax",`Expected STEP, REPEAT, CALL or DEFINE but found ${sh(t)}.`,t.line)};
+ ex("KEYWORD","RECIPE");const r={name:ex("IDENT").value,serves:null,diet:null,avoid:[],ing:[],procs:[],items:[]};
+ for(;;){if(kw("SERVES")){adv();r.serves=+ex("NUMBER").value}else if(kw("DIET")){adv();r.diet=ex("IDENT").value}
+  else if(kw("AVOID")){adv();r.avoid.push(ex("IDENT").value);while(cur().type==="COMMA"){adv();r.avoid.push(ex("IDENT").value)}}else break}
+ while(kw("INGREDIENT")){const k=adv(),n=ex("IDENT");ex("ASSIGN");const q=ex("NUMBER");let u=null;if(cur().type==="UNIT")u=adv().value;r.ing.push({name:n.value,qty:+q.value,unit:u,line:k.line})}
+ if(!r.ing.length)throw new E("Syntax",`Recipe “${r.name}” needs at least one INGREDIENT before any STEP.`,cur().line);
+ while(cur().type!=="EOF"){if(kw("DEFINE")){const d=adv(),n=ex("IDENT"),ps=[];ex("LPAREN");if(cur().type!=="RPAREN"){ps.push(ex("IDENT").value);while(cur().type==="COMMA"){adv();ps.push(ex("IDENT").value)}}ex("RPAREN");
+   const body=[];while(!kw("END")){if(cur().type==="EOF")throw new E("Syntax",`DEFINE “${n.value}” is missing END.`,cur().line);body.push(item())}adv();r.procs.push({name:n.value,params:ps,body,line:d.line})}else r.items.push(item())}
+ if(!r.items.length)throw new E("Syntax",`Recipe “${r.name}” needs at least one STEP.`,cur().line);return r}
+function analyze(A){const er=[],tb=new Map(),push=(m,l,p="Semantic")=>er.push(new E(p,m,l));
+ for(const i of A.ing){if(tb.has(i.name)){push(`Ingredient “${i.name}” is declared twice (first on line ${tb.get(i.name).line}).`,i.line);continue}
+  if(i.qty<=0)push(`Quantity for “${i.name}” must be greater than zero.`,i.line);const kb=KB[i.name]||["",{}],kc=kb[1][i.unit||"_"];tb.set(i.name,{...i,type:"INGREDIENT",scope:A.name,tag:kb[0],kcal:(kc||0)*i.qty,na:kc===undefined})}
+ const P=new Map();for(const d of A.procs){if(P.has(d.name))push(`Procedure “${d.name}” is defined twice.`,d.line);P.set(d.name,d);
+  d.body.forEach(s=>(s.step||s).args.forEach(a=>{if(a.kind==="ref"&&!d.params.includes(a.name)&&!tb.has(a.name))push(`Procedure “${d.name}” uses “${a.name}”, which is neither a parameter nor a declared ingredient.`,s.line)}))}
+ const out=[],sub=(a,e)=>a.kind==="ref"&&e[a.name]?e[a.name]:a,mk=(s,e,cl)=>out.push({action:s.action,args:s.args.map(a=>sub(a,e)),line:cl||s.line});
+ const run=(its,e,stk,cl)=>{for(const s of its){if(s.t==="step")mk(s,e,cl);else if(s.t==="repeat")for(let i=0;i<s.n;i++)mk(s.step,e,cl);
+  else{const d=P.get(s.name),l=cl||s.line;if(!d){push(`CALL to undefined procedure “${s.name}”.`,l);continue}
+   if(stk.includes(s.name)){push(`Procedure “${s.name}” calls itself. Recursion is not allowed.`,l);continue}
+   if(d.params.length!==s.args.length){push(`Procedure “${s.name}” expects ${d.params.length} argument(s) but CALL gives ${s.args.length}.`,l);continue}
+   const e2={};d.params.forEach((p,i)=>e2[p]=sub(s.args[i],e));run(d.body,e2,[...stk,s.name],l)}}};
+ run(A.items,{},[]);
+ for(const s of out)for(const a of s.args){if(a.kind==="ref"&&!tb.has(a.name))push(`Ingredient “${a.name}” is used in STEP ${s.action} but never declared.`,s.line);if(a.kind==="time"&&a.n<=0)push(`Time value in STEP ${s.action} must be greater than zero.`,s.line)}
+ if(A.diet&&!["vegan","vegetarian"].includes(A.diet))push(`DIET must be vegan or vegetarian, not “${A.diet}”.`,1);
+ const ban=A.diet==="vegan"?["dairy","egg","fish","meat"]:A.diet==="vegetarian"?["fish","meat"]:[];
+ for(const i of tb.values())if(i.tag){const why=A.avoid.includes(i.tag)?`AVOID ${i.tag}`:ban.includes(i.tag)?`DIET ${A.diet}`:null;
+  if(why){const e=new E("Diet",`Ingredient “${i.name}” is tagged “${i.tag}”, which violates ${why}. Try replacing it with “${SUB[i.tag]}”.`,i.line);e.fix=[i.name,SUB[i.tag]];er.push(e)}}
+ const seen=new Set();return{er:er.filter(e=>!seen.has(e.message)&&seen.add(e.message)).sort((a,b)=>a.line-b.line),tb,steps:out}}
+const fq=(q,u)=>u?`${q} ${u}`:`${q}`,n2=x=>+x.toFixed(2),fa=a=>a.ingredient?`${a.ingredient}=${fq(a.qty,a.unit)}`:`${a.time} ${a.unit}`,fi=i=>`${i.action}(${i.args.map(fa).join(", ")})`;
+function opt(ir){const o=[];let rm=0;for(const i of ir){const l=o[o.length-1];
+ if(l&&i.action==="heat_pan"&&l.action==="heat_pan"){rm++;continue}
+ if(l&&i.action==="cook"&&l.action==="cook"&&l.args[0]&&i.args[0]&&l.args[0].time&&i.args[0].time&&l.args[0].unit===i.args[0].unit){l.args=[{time:l.args[0].time+i.args[0].time,unit:l.args[0].unit}];rm++;continue}
+ o.push({action:i.action,args:i.args})}return{ir:o,rm}}
+function flow(ir){const s={pan:"COLD",c:[],cooked:false,served:false},sn=[],er=[],wn=[],us={};
+ ir.forEach((i,k)=>{const n=k+1,A=i.action,rf=i.args.filter(a=>a.ingredient);
+  if(s.served&&A!=="serve")er.push(`step ${n}: ${A}() happens after serve()`);
+  if(A==="heat_pan")s.pan="HOT";
+  else if(A==="cook"){if(s.pan==="COLD")er.push(`step ${n}: cook() on a cold pan`);else if(!s.c.length)er.push(`step ${n}: cook() on an empty pan`);s.cooked=true}
+  else if(A==="serve"){if(!s.cooked)er.push(`step ${n}: serve() before the food was cooked`);s.served=true}
+  else{if(A==="boil")s.pan="HOT";rf.forEach(r=>{if(A==="add"&&s.pan==="COLD")wn.push(`step ${n}: adding ${r.ingredient} to a cold pan (no heat_pan() before it)`);if(!s.c.includes(r.ingredient))s.c.push(r.ingredient)})}
+  rf.forEach(r=>{const u=us[r.ingredient]=us[r.ingredient]||{qty:0,unit:r.unit};u.qty=n2(u.qty+r.qty)});
+  sn.push({pan:s.pan,c:[...s.c],cooked:s.cooked,served:s.served,us:JSON.parse(JSON.stringify(us))})});return{er,wn,sn,us}}
+const mins=ir=>Math.round(ir.reduce((t,i)=>t+i.args.reduce((x,a)=>x+(a.time?a.time*(/hour/.test(a.unit)?60:/second/.test(a.unit)?1/60:1):0),0),0));
+const say=i=>{const w=i.action.replace(/_/g," ");return w[0].toUpperCase()+w.slice(1)+(i.args.length?" "+i.args.map(a=>a.ingredient?`${fq(a.qty,a.unit)} ${a.ingredient}`:`${a.time} ${a.unit}`).join(" and "):"")};
+function genPy(R){const q=JSON.stringify;return[`print(${q("=== "+R.ast.name+" ===")})`,"print('Ingredients:')",...R.ingS.map(i=>`print(${q(" - "+fq(i.qty,i.unit)+" "+i.name)})`),"print('Method:')",...R.ir.map((i,k)=>`print(${q(` ${k+1}. ${say(i)}`)})`),`print('Total cooking time: ${mins(R.ir)} minute(s)')`].join("\n")}
+function tree(n,pre="",last=true,root=true){let o=root?n[0]+"\n":pre+(last?"└── ":"├── ")+n[0]+"\n";const np=root?"":pre+(last?"    ":"│   ");n[1].forEach((k,i)=>o+=tree(k,np,i===n[1].length-1,false));return o}
+const ax=x=>x.kind==="ref"?`Ref(${x.name})`:`Time(${x.n}, ${x.unit})`,sl=s=>s.t==="repeat"?`Repeat(${s.n}, Step(action=${s.step.action}, args=[${s.step.args.map(ax)}]))`:s.t==="call"?`Call(${s.name}, args=[${s.args.map(ax)}])`:`Step(action=${s.action}, args=[${s.args.map(ax)}])`;
+const astTree=A=>tree([`Recipe(${A.name}${A.serves?`, serves=${A.serves}`:""}${A.diet?`, diet=${A.diet}`:""}${A.avoid.length?`, avoid=${A.avoid}`:""})`,[["IngredientList",A.ing.map(i=>[`Ingredient(name=${i.name}, qty=${i.qty}, unit=${i.unit})`,[]])],...(A.procs.length?[["ProcedureList",A.procs.map(d=>[`Define(${d.name}(${d.params}))`,d.body.map(s=>[sl(s),[]])])]]:[]),["StepList",A.items.map(s=>[sl(s),[]])]]]);
+
+const EX={"TomatoRice (valid)":`RECIPE TomatoRice
+INGREDIENT rice = 2 cups
+INGREDIENT tomato = 3
+INGREDIENT oil = 2 tbsp
+STEP heat_pan()
+STEP add(oil)
+STEP add(tomato)
+STEP add(rice)
+STEP cook(10 minutes)
+STEP serve()`,
+"SpicyRice (procedures, REPEAT, SERVES)":`RECIPE SpicyRice
+SERVES 4
+DIET vegan
+AVOID nuts
+INGREDIENT rice = 2 cups
+INGREDIENT cumin = 1 tsp
+INGREDIENT oil = 1 tbsp
+DEFINE tempering(spice)
+STEP add(spice)
+STEP stir()
+END
+DEFINE simmer(t)
+STEP cook(t)
+STEP stir()
+END
+STEP heat_pan()
+STEP add(oil)
+STEP add(rice)
+REPEAT 3 STEP stir()
+CALL tempering(cumin)
+CALL simmer(15 minutes)
+STEP serve()`,
+"Vegan lentil soup":`RECIPE LentilSoup
+SERVES 2
+DIET vegan
+INGREDIENT lentils = 1 cups
+INGREDIENT onion = 2
+INGREDIENT oil = 1 tbsp
+INGREDIENT water = 500 ml
+INGREDIENT salt = 1 tsp
+STEP heat_pan()
+STEP add(oil)
+STEP add(onion)
+STEP boil(water, lentils)
+STEP add(salt)
+STEP cook(25 minutes)
+STEP serve()`,
+"Vegetarian omelette":`RECIPE Omelette
+DIET vegetarian
+INGREDIENT egg = 3
+INGREDIENT cheese = 30 g
+INGREDIENT butter = 1 tbsp
+INGREDIENT salt = 1 tsp
+STEP heat_pan()
+STEP add(butter)
+STEP add(egg)
+STEP add(cheese)
+STEP add(salt)
+STEP cook(6 minutes)
+STEP serve()`,
+"FestivalRice (optimizer: 11 to 9)":`RECIPE FestivalRice
+INGREDIENT rice = 2 cups
+INGREDIENT oil = 2 tbsp
+INGREDIENT salt = 1 tsp
+STEP heat_pan()
+STEP heat_pan()
+STEP add(oil)
+STEP add(rice)
+REPEAT 3 STEP stir()
+STEP add(salt)
+STEP cook(5 minutes)
+STEP cook(5 minutes)
+STEP serve()`,
+"BadVegan (diet errors, try Auto-repair)":`RECIPE BadVegan
+DIET vegan
+AVOID nuts
+INGREDIENT rice = 1 cups
+INGREDIENT butter = 2 tbsp
+INGREDIENT egg = 2
+INGREDIENT peanut = 3 tbsp
+STEP heat_pan()
+STEP add(butter)
+STEP add(rice)
+STEP cook(10 minutes)
+STEP serve()`,
+"Kitchen flow errors":`RECIPE Backwards
+INGREDIENT rice = 1 cups
+STEP add(rice)
+STEP serve()
+STEP cook(5 minutes)`,
+"Procedure errors":`RECIPE Oops
+INGREDIENT rice = 1 cups
+DEFINE loop()
+CALL loop()
+END
+DEFINE fry(x)
+STEP add(x)
+STEP add(ghost)
+END
+CALL fry(rice, rice)
+CALL missing()
+CALL loop()`,
+"Many semantic errors":`RECIPE Test
+INGREDIENT rice = 2 cups
+INGREDIENT rice = 1 cup
+INGREDIENT salt = 0 tsp
+STEP add(pepper)
+STEP cook(0 minutes)`,
+"Lexical error":`RECIPE Test
+INGREDIENT rice = 2 @cups
+STEP add(rice)`,
+"Syntax error (missing =)":`RECIPE Test
+INGREDIENT rice 2 cups
+STEP add(rice)`,
+"Goals: light lentil rice (ENSURE)":`RECIPE LightLentilRice
+SERVES 2
+PROTECT lentils
+ENSURE calories_per_serving <= 620
+ENSURE protein_per_serving >= 14
+ENSURE cook_time <= 20 minutes
+INGREDIENT rice = 3 cups
+INGREDIENT lentils = 2 cups
+INGREDIENT oil = 4 tbsp
+INGREDIENT onion = 2
+INGREDIENT salt = 1 tsp
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(onion)
+STEP add(rice)
+STEP add(lentils)
+STEP add(salt)
+STEP cook(30 minutes)
+STEP serve()
+`,
+"Goals: protein bowl (swap)":`RECIPE ProteinBowl
+SERVES 2
+DIET vegetarian
+ENSURE protein_per_serving >= 22
+ENSURE calories_per_serving <= 600
+INGREDIENT rice = 2 cups
+INGREDIENT cheese = 60 g
+INGREDIENT oil = 2 tbsp
+INGREDIENT tomato = 2
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(tomato)
+STEP add(rice)
+STEP add(cheese)
+STEP cook(12 minutes)
+STEP serve()
+`,
+"Goals: impossible":`RECIPE ImpossibleDiet
+SERVES 1
+PROTECT rice
+PROTECT oil
+ENSURE calories_per_serving <= 100
+INGREDIENT rice = 2 cups
+INGREDIENT oil = 2 tbsp
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(rice)
+STEP cook(10 minutes)
+STEP serve()
+`,
+"Smart: broken recipe":`RECIPE BrokenRice
+SERVES 2
+INGREDIANT rice = 2 cups
+INGREDIENT tomato 3
+INGREDIENT oil = 0 tbsp
+INGREDIENT rice = 1 cups
+step add(oil)
+STEP add(tomatto)
+STEP add(salt)
+STEP add(rice)
+STEP cook(0 minutes)@
+STEP serve
+STEP stir()
+`};
+
+const $=id=>document.getElementById(id),src=$("src"),view=$("view"),esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const STG=[["lex","Lexer"],["parse","Parser"],["sem","Semantic"],["ir","IR"],["opt","Optimizer"],["flow","Kitchen flow"],["run","Interpreter"],["gen","Codegen"]],TABS=["Result","Goals","Smart","Nutrition","Tokens","AST","Symbols","IR","Kitchen","Code"];
+let R={},tab="Result",timer=null;const stop=()=>{clearInterval(timer);timer=null};
+$("ex").innerHTML=Object.keys(EX).map(k=>`<option>${k}</option>`).join("");
+$("ex").onchange=e=>{const k=e.target.value;src.value=EX[k];tab=/^Goals/.test(k)?"Goals":/^Smart/.test(k)?"Smart":"Result";compile()};$("run").onclick=()=>compile();$("sv").onchange=()=>compile();$("dt").onchange=e=>{const v=e.target.value;let s=src.value.replace(/^DIET[ \t]+\w+\n?/gm,"");if(v)s=s.replace(/^(RECIPE.*)$/m,"$1\nDIET "+v);src.value=s;compile()};
+src.oninput=()=>gut();src.onscroll=()=>$("gut").scrollTop=src.scrollTop;src.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();compile()}};
+$("tabs").innerHTML=TABS.map(t=>`<button role="tab" data-t="${t}">${t}</button>`).join("");$("tabs").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;render()}};
+function gut(l=[]){$("gut").innerHTML=Array.from({length:src.value.split("\n").length},(_,i)=>l.includes(i+1)?`<span class="e">${i+1}</span>`:i+1).join("\n")}
+function compile(fixes){stop();const code=src.value.replace(/^[ \t]*(ENSURE|PROTECT)\b.*$/gm,""),N=$("sv").value;R={st:{},nt:{},errs:[],wn:[],fixes:fixes||[],k:0};
+ const ok=(s,n)=>{R.st[s]="ok";R.nt[s]=n},bad=(s,e)=>{if(!(e instanceof E))throw e;R.st[s]="fail";R.errs=[e];return fin()};
+ try{R.tokens=tokenize(code);ok("lex",`${R.tokens.length} tokens`)}catch(e){return bad("lex",e)}
+ try{R.ast=parse(R.tokens);ok("parse","tree built")}catch(e){return bad("parse",e)}
+ const A=R.ast,a=analyze(A);R.tb=a.tb;if(a.er.length){R.st.sem="fail";R.errs=a.er;return fin()}ok("sem",`${a.tb.size} symbols`);
+ R.base=A.serves||1;R.f=N?+N/R.base:1;const T=R.tb;
+ R.ingS=[...T.values()].map(i=>({name:i.name,qty:n2(i.qty*R.f),unit:i.unit,kcal:n2(i.kcal*R.f),na:i.na}));
+ R.raw=a.steps.map(s=>({action:s.action,args:s.args.map(x=>x.kind==="ref"?{ingredient:x.name,qty:n2(T.get(x.name).qty*R.f),unit:T.get(x.name).unit}:{time:x.n,unit:x.unit})}));ok("ir",`${R.raw.length} instructions`);
+ const o=opt(R.raw);R.ir=o.ir;R.rm=o.rm;ok("opt",o.rm?`${R.raw.length} to ${R.ir.length}`:"no change");
+ R.fl=flow(R.ir);R.wn=R.fl.wn;if(R.fl.er.length){R.st.flow="fail";R.errs=R.fl.er.map(m=>new E("Flow",m,0));return fin()}ok("flow",R.wn.length?`${R.wn.length} warning(s)`:"clean");
+ R.kcal=Math.round(R.ingS.reduce((t,i)=>t+i.kcal,0));ok("run",`${R.kcal} kcal`);ok("gen","Python + card");fin()}
+function fin(){document.body.dataset.diet=(R.ast&&R.ast.diet)||"";$("dt").value=(R.ast&&R.ast.diet)||"";gut(R.errs.map(e=>e.line));$("line").innerHTML=STG.map(([k,n])=>`<div class="sg ${R.st[k]||""}"><b>${n}</b><span>${R.st[k]==="fail"?"failed":R.nt[k]||"waiting"}</span></div>`).join("");if(R.errs.length&&tab!=="Goals"&&tab!=="Smart")tab="Result";render()}
+function nutri(){if(!R.ingS||R.errs.length)return`<p class="hint">Nutrition is calculated once the recipe passes the semantic checks.</p>`;
+ const A=R.ast,sv=n2(R.base*R.f),mx=Math.max(...R.ingS.map(i=>i.kcal),1),ban={vegan:["dairy","egg","fish","meat"],vegetarian:["fish","meat"]},okd=(t,d)=>!t||!ban[d].includes(t)?"✓":"✗";
+ return`<div class="kit"><div class="pan HOT" style="width:120px;height:120px;font-size:1.2rem;color:var(--ac);border-color:var(--ac);box-shadow:0 0 26px var(--ac);text-align:center">${R.kcal}<br>kcal</div><div><b>${n2(R.kcal/sv)} kcal per serving</b><p class="hint">${sv} serving(s). ${A.diet?`Diet: ${A.diet}.`:"No diet set."} Values come from the knowledge table. n/a means the ingredient or unit isn’t in it, so it adds 0 kcal to the total.</p></div></div>
+ <h3>Calories by ingredient</h3>${R.ingS.map(i=>`<div style="display:flex;gap:8px;align-items:center;margin:4px 0"><span style="width:90px">${esc(i.name)}</span><div style="flex:1;background:var(--chip);border-radius:4px"><div style="width:${i.kcal/mx*100}%;background:var(--ac);height:14px;border-radius:4px"></div></div><span class="m" style="width:70px;text-align:right">${i.na?"n/a":i.kcal}</span></div>`).join("")}
+ <h3>Diet check</h3><div class="wrap"><table><tr><th>Ingredient</th><th>Allergen tag</th><th>Vegetarian</th><th>Vegan</th>${A.avoid.map(a=>`<th>Avoid ${esc(a)}</th>`).join("")}</tr>${R.ingS.map(i=>{const t=R.tb.get(i.name).tag;return`<tr><td>${esc(i.name)}</td><td>${t||"none"}</td><td>${okd(t,"vegetarian")}</td><td>${okd(t,"vegan")}</td>${A.avoid.map(a=>`<td>${t===a?"✗":"✓"}</td>`).join("")}</tr>`}).join("")}</table></div>`}
+function repair(){const fx=R.errs.filter(e=>e.fix).map(e=>e.fix),seen=new Set(),log=[];let L=src.value.split("\n");
+ for(const[o,n]of fx){L=L.map(l=>l.replace(new RegExp("\\b"+o+"\\b","g"),n));log.push(`FIX: replaced ingredient '${o}' with '${n}'`)}
+ L=L.filter(l=>{const m=l.match(/^INGREDIENT\s+(\w+)/);if(!m)return true;if(seen.has(m[1]))return false;seen.add(m[1]);return true});src.value=L.join("\n");compile(log)}
+function render(){document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===tab));let h="";const ir=R.ir,nok=m=>`<p class="hint">${m}</p>`;
+ if(tab!=="Kitchen")stop();
+ if(tab==="Result"){h=R.fixes.map(f=>`<div class="fx">${esc(f)}</div>`).join("");
+  if(R.errs.length){h+=R.errs.map(e=>`<div class="err"><b>${e.phase} error</b>${e.line?`, line ${e.line}`:""}<br>${esc(e.message)}</div>`).join("");
+   if(R.errs.some(e=>e.fix))h+=`<button class="run" id="fixb">Auto-repair the source</button>`;h+=nok("Later stages don’t run until the failing one passes.")}
+  else{h+=R.wn.map(w=>`<div class="wn"><b>Warning</b>, ${esc(w)}</div>`).join("");const A=R.ast;
+   h+=`<h3>${esc(A.name)}</h3>${A.diet?`<div class="dietb">${A.diet==="vegan"?"🌱 Vegan":"🥕 Vegetarian"} · all ${R.ingS.length} ingredients checked${A.avoid.length?`, free of ${A.avoid.join(", ")}`:""}</div>`:""}${nok(`Serves ${n2(R.base*R.f)}${R.f!==1?` (scaled ×${n2(R.f)} from ${R.base})`:""}${A.diet?`, ${A.diet}`:""}${A.avoid.length?`, avoids ${A.avoid.join(", ")}`:""}. Optimizer removed ${R.rm} instruction(s).`)}
+   <div class="two"><div><h3>Ingredients</h3><div class="wrap"><table><tr><th>Item</th><th>Amount</th><th>kcal</th></tr>${R.ingS.map(i=>`<tr><td>${esc(i.name)}${R.tb.get(i.name).tag?` <span class="chip tg">${R.tb.get(i.name).tag}</span>`:""}</td><td class="m">${fq(i.qty,i.unit)}</td><td class="m">${i.na?"n/a":i.kcal}</td></tr>`).join("")}<tr><th>Total</th><th></th><th class="m">${R.kcal}</th></tr></table></div><h3>Calorie share</h3><div class="nbar">${R.ingS.filter(i=>i.kcal>0).map((i,k)=>`<span style="flex:${i.kcal};opacity:${Math.max(.4,1-k*.12)}" title="${esc(i.name)} ${i.kcal} kcal">${esc(i.name)}</span>`).join("")}</div></div>
+   <div><h3>Ingredient usage at runtime</h3>${Object.entries(R.fl.us).map(([k,v])=>`<span class="chip g">${esc(k)} ${fq(v.qty,v.unit)}</span>`).join("")}</div></div>
+   <h3>Method (${ir.length} steps)</h3><ol class="s">${ir.map(i=>`<li class="d m">${esc(fi(i))}</li>`).join("")}</ol>`}}
+ else if(tab==="Nutrition")h=nutri();
+ else if(tab==="Tokens")h=R.tokens?`<p class="hint">${R.tokens.length} tokens</p><div class="wrap"><table><tr><th>Line</th><th>Type</th><th>Value</th></tr>${R.tokens.filter(t=>t.type!=="EOF").map(t=>`<tr><td class="m">${t.line}</td><td><span class="tok ${t.type}">${t.type}</span></td><td class="m">${esc(t.value)}</td></tr>`).join("")}</table></div>`:nok("The lexer stopped at an error.");
+ else if(tab==="AST")h=R.ast?`<pre>${esc(astTree(R.ast))}</pre>`:nok("The parser didn’t finish.");
+ else if(tab==="Symbols")h=R.tb&&R.tb.size?`<div class="wrap"><table><tr><th>Name</th><th>Type</th><th>Qty</th><th>Unit</th><th>Scope</th><th>Allergen tag</th><th>kcal</th></tr>${[...R.tb.values()].map(s=>`<tr><td class="m">${esc(s.name)}</td><td>${s.type}</td><td class="m">${s.qty}</td><td class="m">${s.unit||"(none)"}</td><td>${esc(s.scope)}</td><td>${s.tag||"none"}</td><td class="m">${s.na?"n/a":s.kcal}</td></tr>`).join("")}</table></div>`:nok("Built after the parser passes.");
+ else if(tab==="IR")h=ir?`<p class="hint">Procedures are inlined, REPEAT is unrolled, quantities are resolved${R.f!==1?" and scaled":""}.</p><div class="two"><div><h3>Before optimizing (${R.raw.length})</h3><pre>${esc(R.raw.map((i,k)=>`[${k+1}] ${fi(i)}`).join("\n"))}</pre></div><div><h3>After (${ir.length})</h3><pre>${esc(ir.map((i,k)=>`[${k+1}] ${fi(i)}`).join("\n"))}</pre></div></div>`:nok("Built when semantic analysis passes.");
+ else if(tab==="Kitchen"){if(!R.fl||R.fl.er.length)h=nok("The virtual kitchen runs after the flow check passes.");else{const N=ir.length,k=R.k,s=k?R.fl.sn[k-1]:{pan:"COLD",c:[],us:{}};
+  h=`<div class="bar" style="padding:0 0 10px;border:0"><button id="pv">Back</button><button id="pl">${timer?"Pause":"Play"}</button><button id="nx">Next</button><span class="hint" style="margin:0">Step ${k} of ${N}</span></div>
+  <div class="kit"><div class="pan ${s.pan}">${s.pan}</div><div>${s.c.length?s.c.map(c=>`<span class="chip">${esc(c)}</span>`).join(""):'<span class="hint">Pan is empty</span>'}<br>${s.cooked?'<span class="chip g">cooked</span>':""}${s.served?'<span class="chip g">served</span>':""}</div></div>
+  <ol class="s">${ir.map((i,j)=>`<li class="m ${j+1<k?"d":j+1===k?"c":""}">${esc(fi(i))}</li>`).join("")}</ol>
+  <h3>Execution log</h3><pre>${esc(ir.slice(0,k).map((i,j)=>`Executing Step ${j+1}: ${fi(i)} -> done`).join("\n")||"(not started)")}</pre>
+  <h3>Usage totals</h3>${Object.entries(s.us||{}).map(([a,v])=>`<span class="chip g">${esc(a)} ${fq(v.qty,v.unit)}</span>`).join("")||nok("none yet")}`}}
+ else if(tab==="Goals")h=`<p class="hint">Write goals as ENSURE lines (calories, protein, cook_time). The compiler checks them, explains failures and finds the cheapest fix. PROTECT keeps an ingredient untouched.</p>`+XR.view("goals",src.value);
+ else if(tab==="Smart")h=`<p class="hint">Auto error fixing on 3 levels, reasoning, learning from 17 recipes. Works even when the source does not compile.</p>`+XR.view("smart",src.value);
+ else h=ir&&!R.errs.length?(()=>{const py=genPy(R);return`<h3>Recipe card</h3><div class="card"><h3 style="margin-top:0">${esc(R.ast.name)}</h3><ul>${R.ingS.map(i=>`<li>${esc(fq(i.qty,i.unit)+" "+i.name)}</li>`).join("")}</ul><ol>${ir.map(i=>`<li>${esc(say(i))}</li>`).join("")}</ol><p class="hint">Total time: ${mins(ir)} minute(s)</p></div><h3>Generated ${esc(R.ast.name)}.py</h3><button id="cp">Copy Python</button><pre style="margin-top:8px">${esc(py)}</pre>`})():nok("Generated when every stage passes.");
+ view.innerHTML=h;const g=id=>$(id);
+ if(g("fixb"))g("fixb").onclick=repair;
+ if(g("xapply"))g("xapply").onclick=()=>{src.value=XR.pending();tab="Result";compile()};
+ if(g("cp"))g("cp").onclick=()=>{try{navigator.clipboard.writeText(genPy(R));g("cp").textContent="Copied"}catch(e){g("cp").textContent="Copy failed"}};
+ if(g("pv")){const N=R.ir.length;g("pv").onclick=()=>{stop();R.k=Math.max(0,R.k-1);render()};g("nx").onclick=()=>{stop();R.k=Math.min(N,R.k+1);render()};
+  g("pl").onclick=()=>{if(timer){stop();render();return}if(R.k>=N)R.k=0;timer=setInterval(()=>{if(R.k>=N){stop();render()}else{R.k++;render()}},800);render()}}}
+const XR=(()=>{
+const D={"KB": {"rice": {"k": {"cups": 200}, "p": {"cups": 4.3}}, "oil": {"k": {"tbsp": 120}, "p": {"tbsp": 0}}, "tomato": {"k": {"None": 22}, "p": {"None": 1}}, "onion": {"k": {"None": 40}, "p": {"None": 1}}, "potato": {"k": {"None": 160}, "p": {"None": 4}}, "salt": {"k": {"tsp": 0}, "p": {"tsp": 0}}, "water": {"k": {"ml": 0, "cups": 0}, "p": {"ml": 0, "cups": 0}}, "sugar": {"k": {"tsp": 16, "tbsp": 48}, "p": {"tsp": 0, "tbsp": 0}}, "lentils": {"k": {"cups": 230}, "p": {"cups": 18}}, "egg": {"k": {"None": 70}, "p": {"None": 6}}, "butter": {"k": {"tbsp": 100}, "p": {"tbsp": 0}}, "milk": {"k": {"cups": 150, "ml": 0.6}, "p": {"cups": 8, "ml": 0.034}}, "paneer": {"k": {"g": 3}, "p": {"g": 0.18}}, "cheese": {"k": {"g": 4}, "p": {"g": 0.25}}, "chicken": {"k": {"g": 1.65}, "p": {"g": 0.27}}, "fish": {"k": {"g": 1.2}, "p": {"g": 0.22}}, "peanut": {"k": {"tbsp": 95}, "p": {"tbsp": 4}}, "almond": {"k": {"tbsp": 50}, "p": {"tbsp": 2}}, "flour": {"k": {"cups": 455}, "p": {"cups": 13}}, "pasta": {"k": {"cups": 220}, "p": {"cups": 8}}, "bread": {"k": {"None": 80}, "p": {"None": 3}}, "tofu": {"k": {"g": 1.45, "None": 90}, "p": {"g": 0.08, "None": 9}}, "sesame": {"k": {"tbsp": 52}, "p": {"tbsp": 1.6}}, "soy_milk": {"k": {"cups": 100, "ml": 0.4}, "p": {"cups": 7, "ml": 0.03}}, "rice_flour": {"k": {"cups": 580}, "p": {"cups": 9}}}, "ALTS": {"rice": ["lentils"], "butter": ["oil"], "cheese": ["paneer", "tofu"], "paneer": ["tofu"], "chicken": ["fish", "tofu"], "pasta": ["rice", "lentils"], "flour": ["rice_flour"], "milk": ["soy_milk"], "egg": ["tofu"], "peanut": ["almond", "sesame"]}, "CORPUS": [{"i": ["oil", "onion", "potato", "salt", "tomato"], "c": 22.0, "q": {"oil": [2, "tbsp"], "onion": [1, null], "potato": [4, null], "salt": [1, "tsp"], "tomato": [2, null]}}, {"i": ["potato", "salt", "water"], "c": 20.0, "q": {"potato": [3, null], "salt": [1, "tsp"], "water": [1, "l"]}}, {"i": ["chicken", "oil", "onion", "salt", "tomato"], "c": 30.0, "q": {"chicken": [500, "g"], "oil": [3, "tbsp"], "onion": [2, null], "salt": [1, "tsp"], "tomato": [3, null]}}, {"i": ["chicken", "oil", "salt"], "c": 25.0, "q": {"chicken": [300, "g"], "oil": [2, "tbsp"], "salt": [1, "tsp"]}}, {"i": ["lentils", "oil", "onion", "salt", "tomato", "water"], "c": 30.0, "q": {"lentils": [2, "cups"], "oil": [1, "tbsp"], "onion": [1, null], "salt": [1, "tsp"], "tomato": [2, null], "water": [800, "ml"]}}, {"i": ["egg", "oil", "onion", "salt", "tomato"], "c": 15.0, "q": {"egg": [4, null], "oil": [2, "tbsp"], "onion": [2, null], "salt": [1, "tsp"], "tomato": [3, null]}}, {"i": ["butter", "egg", "onion", "salt"], "c": 6.0, "q": {"butter": [1, "tbsp"], "egg": [3, null], "onion": [1, null], "salt": [1, "tsp"]}}, {"i": ["fish", "oil", "salt"], "c": 10.0, "q": {"fish": [250, "g"], "oil": [2, "tbsp"], "salt": [1, "tsp"]}}, {"i": ["oil", "onion", "rice", "salt"], "c": 12.0, "q": {"oil": [2, "tbsp"], "onion": [1, null], "rice": [2, "cups"], "salt": [1, "tsp"]}}, {"i": ["milk", "rice", "sugar"], "c": 25.0, "q": {"milk": [3, "cups"], "rice": [1, "cups"], "sugar": [3, "tbsp"]}}, {"i": ["lentils", "oil", "onion", "salt", "water"], "c": 25.0, "q": {"lentils": [1, "cups"], "oil": [1, "tbsp"], "onion": [2, null], "salt": [1, "tsp"], "water": [600, "ml"]}}, {"i": ["oil", "onion", "paneer", "salt", "tomato"], "c": 14.0, "q": {"oil": [2, "tbsp"], "onion": [2, null], "paneer": [200, "g"], "salt": [1, "tsp"], "tomato": [2, null]}}, {"i": ["oil", "rice", "salt", "water"], "c": 15.0, "q": {"oil": [1, "tbsp"], "rice": [3, "cups"], "salt": [1, "tsp"], "water": [500, "ml"]}}, {"i": ["oil", "onion", "potato", "salt"], "c": 18.0, "q": {"oil": [2, "tbsp"], "onion": [1, null], "potato": [3, null], "salt": [1, "tsp"]}}, {"i": ["butter", "egg", "salt"], "c": 5.0, "q": {"butter": [1, "tbsp"], "egg": [4, null], "salt": [1, "tsp"]}}, {"i": ["oil", "pasta", "salt", "tomato", "water"], "c": 15.0, "q": {"oil": [1, "tbsp"], "pasta": [2, "cups"], "salt": [1, "tsp"], "tomato": [3, null], "water": [1, "l"]}}, {"i": ["oil", "onion", "rice", "salt", "tomato"], "c": 18.0, "q": {"oil": [2, "tbsp"], "onion": [2, null], "rice": [3, "cups"], "salt": [1, "tsp"], "tomato": [4, null]}}], "MIN": {"rice": 10, "lentils": 15, "potato": 15, "chicken": 15, "pasta": 8, "egg": 6, "fish": 8}};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const KW=["RECIPE","SERVES","DIET","AVOID","INGREDIENT","STEP","REPEAT","ENSURE","PROTECT"];
+const ACTS=["heat_pan","add","stir","cook","serve","boil"];
+const TS={second:1,seconds:1,minute:60,minutes:60,hour:3600,hours:3600};
+const uk=u=>u==null?"None":u;
+function lev(a,b){const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];}for(let j=1;j<=b.length;j++)d[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length];}
+const sim=(a,b)=>1-lev(a,b)/Math.max(a.length,b.length);
+const close=(w,list,c)=>{let b=null,s=c;list.forEach(x=>{const v=sim(w,x);if(v>=s){s=v;b=x;}});return b;};
+const med=a=>{a=[...a].sort((x,y)=>x-y);const m=a.length>>1;return a.length?(a.length%2?a[m]:(a[m-1]+a[m])/2):null;};
+
+/* ---------- parse / unparse ---------- */
+function parse(src){
+ const r={name:"",serves:null,diet:null,avoid:[],protect:[],contracts:[],ings:[],steps:[],errors:[]};
+ src.split("\n").forEach((raw,i)=>{const t=raw.trim();if(!t)return;let m;
+  if(m=t.match(/^RECIPE\s+(\w+)$/))r.name=m[1];
+  else if(m=t.match(/^SERVES\s+(-?\d+)$/))r.serves=+m[1];
+  else if(m=t.match(/^DIET\s+(\w+)$/))r.diet=m[1];
+  else if(m=t.match(/^AVOID\s+(\w+)$/))r.avoid.push(m[1]);
+  else if(m=t.match(/^PROTECT\s+(\w+)$/))r.protect.push(m[1]);
+  else if(m=t.match(/^ENSURE\s+(\w+)\s*(<=|>=|==|<|>)\s*(\d+)\s*(\w+)?$/))r.contracts.push({metric:m[1],op:m[2],value:+m[3],unit:m[4]||null});
+  else if(m=t.match(/^INGREDIENT\s+(\w+)\s*=\s*(-?\d+)\s*(\w+)?$/))r.ings.push({name:m[1],q:+m[2],unit:m[3]||null});
+  else if(m=t.match(/^(?:REPEAT\s+(-?\d+)\s+)?STEP\s+(\w+)\((.*)\)$/)){
+   const args=m[3].trim()?m[3].split(",").map(a=>{a=a.trim();const x=a.match(/^(-?\d+)\s*(\w+)$/);return x&&TS[x[2]]?{t:1,v:+x[1],u:x[2]}:{t:0,n:a};}):[];
+   r.steps.push({a:m[2],args,rep:m[1]===undefined?1:+m[1]});}
+  else r.errors.push(`line ${i+1}: cannot parse “${t}”`);});
+ return r;}
+function unparse(r){const L=["RECIPE "+r.name];if(r.serves)L.push("SERVES "+r.serves);if(r.diet)L.push("DIET "+r.diet);
+ r.avoid.forEach(a=>L.push("AVOID "+a));r.protect.forEach(p=>L.push("PROTECT "+p));
+ r.contracts.forEach(c=>L.push(`ENSURE ${c.metric} ${c.op} ${c.value}${c.unit?" "+c.unit:""}`));
+ r.ings.forEach(i=>L.push(`INGREDIENT ${i.name} = ${i.q}${i.unit?" "+i.unit:""}`));L.push("");
+ r.steps.forEach(s=>L.push(`${s.rep!=1?"REPEAT "+s.rep+" ":""}STEP ${s.a}(${s.args.map(a=>a.t?a.v+" "+a.u:a.n).join(", ")})`));return L.join("\n")+"\n";}
+
+/* ---------- 1. auto-fix ---------- */
+function fixSource(src,log){
+ return src.split("\n").map((line,i)=>{const n=i+1;
+  const bad=line.match(/[^A-Za-z0-9_=(),<>\s]/g);if(bad){log.push(`line ${n}: removed illegal character ${[...new Set(bad)].join(" ")}`);line=line.replace(/[^A-Za-z0-9_=(),<>\s]/g,"");}
+  let m=line.match(/^(\s*)([A-Za-z_]+)(.*)$/);
+  if(m&&!KW.includes(m[2])){let f=null;if(KW.includes(m[2].toUpperCase())&&m[2]!==m[2].toUpperCase())f=m[2].toUpperCase();
+   else if(m[2]===m[2].toUpperCase())f=close(m[2],KW,.7);
+   if(f){log.push(`line ${n}: keyword “${m[2]}” → ${f}`);line=m[1]+f+m[3];}}
+  m=line.match(/\bSTEP\s+([A-Za-z_]\w*)/);if(m&&!ACTS.includes(m[1])){const c=close(m[1],ACTS,.8);if(c){log.push(`line ${n}: action “${m[1]}” → ${c}`);line=line.replace(m[1],c);}}
+  if(/^\s*(REPEAT\s+\d+\s+)?STEP\s+\w+\s*$/.test(line)){log.push(`line ${n}: added missing ()`);line=line.trimEnd()+"()";}
+  m=line.match(/^(\s*INGREDIENT\s+\w+)\s+(\d+.*)$/);if(m){log.push(`line ${n}: added missing =`);line=m[1]+" = "+m[2];}
+  return line;}).join("\n");}
+function expectedCook(names,ex){const a=new Set(names);const sc=D.CORPUS.map(r=>{const b=new Set(r.i);let x=0;a.forEach(v=>b.has(v)&&x++);return[x/(a.size+b.size-x),r.c];}).filter(s=>s[0]>=.25&&s[0]<1).sort((p,q)=>q[0]-p[0]).slice(0,5);
+ return sc.length?{e:med(sc.map(s=>s[1])),n:sc.length,tol:Math.max(3,med(sc.map(s=>s[1]))*.9/Math.sqrt(sc.length))}:null;}
+function typQty(n,u){const v=D.CORPUS.filter(r=>r.q[n]&&r.q[n][1]===u).map(r=>r.q[n][0]);return v.length?Math.round(med(v)):null;}
+function fixMeaning(r,log){
+ if(r.serves!==null&&r.serves<=0){log.push("SERVES invalid → removed");r.serves=null;}
+ const seen={},keep=[];r.ings.forEach(i=>{if(seen[i.name]){const f=seen[i.name];if(f.unit===i.unit&&f.q>0&&i.q>0){f.q+=i.q;log.push(`duplicate “${i.name}” merged (now ${f.q})`);}else log.push(`duplicate “${i.name}” dropped`);}else{seen[i.name]=i;keep.push(i);}});r.ings=keep;
+ r.ings.forEach(i=>{if(i.q<=0){const t=typQty(i.name,i.unit)||1;log.push(`quantity of “${i.name}” was ${i.q} → ${t} (${typQty(i.name,i.unit)?"learned":"default"})`);i.q=t;}});
+ const dec=()=>r.ings.map(i=>i.name);
+ for(let s=0;s<r.steps.length;s++){const st=r.steps[s];if(st.rep<=0){log.push("REPEAT ≤ 0 → 1");st.rep=1;}
+  for(let j=0;j<st.args.length;j++){const a=st.args[j];
+   if(a.t&&a.v<=0){const x=expectedCook(dec());const v=x?Math.round(x.e):10;log.push(`time ${a.v} ${a.u} → ${v} minutes (${x?"learned from "+x.n+" similar recipes":"default"})`);a.v=v;a.u="minutes";}
+   else if(!a.t&&!dec().includes(a.n)){const c=close(a.n,dec(),.72);
+    if(c){log.push(`“${a.n}” not declared → renamed to “${c}”`);a.n=c;}
+    else if(D.KB[a.n]){const u=Object.keys(D.KB[a.n].k)[0];const un=u==="None"?null:u;const q=typQty(a.n,un)||1;r.ings.push({name:a.n,q,unit:un});log.push(`“${a.n}” not declared → declared from knowledge base (${q}${un?" "+un:""})`);}
+    else{log.push(`“${a.n}” not declared → removed from step`);st.args.splice(j--,1);}}}}
+ r.steps=r.steps.filter(s=>!(s.a==="add"&&!s.args.length));}
+function flatActs(s){return Array(Math.max(s.rep,1)).fill([s.a,s.args.filter(a=>!a.t).map(a=>a.n)]);}
+function fixFlow(r,log){
+ for(let it=0;it<14;it++){let issue=null,hot=false,cont=new Set,cooked=false,served=false;
+  outer:for(let i=0;i<r.steps.length;i++)for(const[act,ns]of flatActs(r.steps[i])){
+   if(served&&act!=="serve"){issue=["after",i];break outer;}
+   if(act==="heat_pan"||act==="boil"){hot=true;ns.forEach(n=>cont.add(n));}
+   else if(act==="add"){if(!hot){issue=["cold",i];break outer;}ns.forEach(n=>cont.add(n));}
+   else if(act==="cook"){if(!hot){issue=["cold",i];break outer;}if(!cont.size){issue=["empty",i];break outer;}cooked=true;}
+   else if(act==="serve"){if(!cooked){issue=["early",i];break outer;}served=true;}}
+  if(!issue)break;const[k,i]=issue;
+  if(k==="cold"){r.steps.splice(i,0,{a:"heat_pan",args:[],rep:1});log.push(`step ${i+1} needs heat → inserted heat_pan()`);}
+  else if(k==="empty"){const used=new Set(r.steps.flatMap(s=>s.args.filter(a=>!a.t).map(a=>a.n)));const un=r.ings.map(x=>x.name).filter(n=>!used.has(n));
+   if(!un.length){log.push("UNFIXED: cook() with an empty pan and no spare ingredient");return false;}
+   r.steps.splice(i,0,{a:"add",args:un.map(n=>({t:0,n})),rep:1});log.push(`empty pan → inserted add(${un.join(", ")})`);}
+  else if(k==="early"){if(r.steps.slice(i+1).some(s=>s.a==="cook")){r.steps.push(r.steps.splice(i,1)[0]);log.push("serve() came too early → moved to the end");}
+   else{const x=expectedCook(r.ings.map(z=>z.name));const t=x?Math.round(x.e):10;r.steps.splice(i,0,{a:"cook",args:[{t:1,v:t,u:"minutes"}],rep:1});log.push(`no cooking before serve → inserted cook(${t} minutes)`);}}
+  else{const s=r.steps.findIndex(z=>z.a==="serve");r.steps.push(r.steps.splice(s,1)[0]);log.push("steps after serve() → serve() moved to the end");}}
+ if(!r.steps.some(s=>s.a==="serve")){r.steps.push({a:"serve",args:[],rep:1});log.push("recipe never served → appended serve()");}return true;}
+
+/* ---------- metrics ---------- */
+const kc=(n,q,u,w)=>{const e=D.KB[n];if(!e)return 0;const v=e[w][uk(u)];return v==null?null:v*q;};
+function uses(r){const m={};r.steps.forEach(s=>s.args.forEach(a=>{if(!a.t)m[a.n]=(m[a.n]||0)+s.rep;}));return m;}
+function measure(r){const u=uses(r);let k=0,p=0;r.ings.forEach(i=>{const n=u[i.name]||0;k+=n*(kc(i.name,i.q,i.unit,"k")||0);p+=n*(kc(i.name,i.q,i.unit,"p")||0);});
+ let sec=0;r.steps.forEach(s=>s.args.forEach(a=>{if(a.t)sec+=a.v*TS[a.u]*s.rep;}));const sv=r.serves||null;
+ return{calories:k,calories_per_serving:sv?k/sv:null,protein:p,protein_per_serving:sv?p/sv:null,cook_time:sec/60};}
+const bound=c=>c.metric==="cook_time"?c.value*(TS[c.unit]||60)/60:c.value;
+const holds=(v,op,b)=>op==="<="?v<=b+1e-9:op===">="?v>=b-1e-9:op==="<"?v<b-1e-9:op===">"?v>b+1e-9:Math.abs(v-b)<=.5;
+const fv=(m,v)=>v==null?"n/a":m==="cook_time"?v.toFixed(1)+" min":v.toFixed(1)+(m.startsWith("cal")?" kcal":" g");
+function verify(r,m){return r.contracts.map(c=>{const a=m[c.metric];return{c,a,b:bound(c),ok:a!=null&&holds(a,c.op,bound(c))};});}
+function blame(r,c){const u=uses(r),parts={};
+ if(c.metric==="cook_time"){r.steps.forEach((s,i)=>s.args.forEach(a=>{if(a.t)parts[`step ${i+1}: ${s.a}()`]=(parts[`step ${i+1}: ${s.a}()`]||0)+a.v*TS[a.u]*s.rep/60;}));}
+ else{const w=c.metric.startsWith("cal")?"k":"p",d=c.metric.endsWith("serving")?r.serves:1;r.ings.forEach(i=>{const v=(u[i.name]||0)*(kc(i.name,i.q,i.unit,w)||0)/d;if(v)parts[i.name]=v;});}
+ const t=Object.values(parts).reduce((a,b)=>a+b,0)||1;return Object.entries(parts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>[k,v,100*v/t]);}
+
+/* ---------- 2. contracts: uniform-cost auto-tuner ---------- */
+class Heap{constructor(){this.a=[];}push(x){const a=this.a;a.push(x);let i=a.length-1;while(i){const p=(i-1)>>1;if(a[p][0]<=a[i][0])break;[a[p],a[i]]=[a[i],a[p]];i=p;}}
+ pop(){const a=this.a,t=a[0],l=a.pop();if(a.length){a[0]=l;let i=0;for(;;){let c=2*i+1;if(c>=a.length)break;if(c+1<a.length&&a[c+1][0]<a[c][0])c++;if(a[i][0]<=a[c][0])break;[a[i],a[c]]=[a[c],a[i]];i=c;}}return t;}get size(){return this.a.length;}}
+const rng=(v,l)=>{const lo=Math.max(1,Math.ceil(v*(1-l))),hi=Math.max(v,Math.floor(v*(1+l))),o=[];for(let x=lo;x<=hi;x++)o.push(x);return o;};
+function tune(r,limit){
+ const u=uses(r),declared=new Set(r.ings.map(i=>i.name)),dims=[];
+ const NV=["chicken","fish"],DA=["paneer","cheese","milk","butter","egg"];
+ r.ings.forEach((ing,idx)=>{if(r.protect.includes(ing.name)||!u[ing.name])return;
+  dims.push({k:"q",idx,base:ing.q,vals:rng(ing.q,limit),name:ing.name});
+  const alts=(D.ALTS[ing.name]||[]).filter(a=>!declared.has(a)&&D.KB[a]&&D.KB[a].k[uk(ing.unit)]!=null&&D.KB[a].p[uk(ing.unit)]!=null&&!(r.diet&&NV.includes(a))&&!(r.diet==="vegan"&&DA.includes(a)));
+  if(alts.length)dims.push({k:"s",idx,base:0,vals:[ing.name,...alts],name:ing.name});});
+ const tdims=[];r.steps.forEach((s,si)=>s.args.forEach((a,ai)=>{if(a.t&&a.v>0)dims.push({k:"t",si,ai,base:a.v,vals:rng(a.v,limit),mult:TS[a.u]*s.rep/60,name:s.a+"() time"});}));
+ const base0=measure(r);
+ const model=st=>{let k=0,p=0,cook=base0.cook_time;const q={},sw={};
+  dims.forEach((d,i)=>{if(d.k==="q")q[d.idx]=d.vals[st[i]];else if(d.k==="s")sw[d.idx]=d.vals[st[i]];else cook+=(d.vals[st[i]]-d.base)*d.mult;});
+  r.ings.forEach((ing,i)=>{const n=u[ing.name]||0,nm=sw[i]||ing.name,qq=q[i]!==undefined?q[i]:ing.q;k+=n*(kc(nm,qq,ing.unit,"k")||0);p+=n*(kc(nm,qq,ing.unit,"p")||0);});
+  const s=r.serves;return{calories:k,calories_per_serving:s?k/s:null,protein:p,protein_per_serving:s?p/s:null,cook_time:cook};};
+ const viol=st=>{const m=model(st);return r.contracts.reduce((t,c)=>{const v=m[c.metric],b=bound(c);return t+(holds(v,c.op,b)?0:Math.abs(v-b)/Math.max(b,1)+1e-6);},0);};
+ const cost=st=>dims.reduce((t,d,i)=>t+(d.k==="s"?(st[i]?1:0):Math.abs(d.vals[st[i]]-d.base)/d.base),0);
+ const start=dims.map(d=>d.k==="s"?0:d.vals.indexOf(d.base)),key=s=>s.join(",");
+ const H=new Heap,seen=new Set([key(start)]);H.push([0,start]);let ex=0,best=[viol(start),start];
+ while(H.size){const[c,st]=H.pop();ex++;const v=viol(st);
+  if(v===0){const n=JSON.parse(JSON.stringify(r));dims.forEach((d,i)=>{const x=d.vals[st[i]];
+    if(d.k==="q")n.ings[d.idx].q=x;else if(d.k==="t")n.steps[d.si].args[d.ai].v=x;});
+   dims.forEach((d,i)=>{if(d.k==="s"&&st[i]){const o=d.name,nw=d.vals[st[i]];n.ings[d.idx].name=nw;n.steps.forEach(s=>s.args.forEach(a=>{if(!a.t&&a.n===o)a.n=nw;}));}});
+   return{ok:1,n,c,ex,edits:edits(dims,st)};}
+  if(v<best[0])best=[v,st];if(ex>=200000)return{ok:0,ex,budget:1};
+  dims.forEach((d,i)=>{const nb=[];if(d.k==="s"){if(st[i]===0)for(let o=1;o<d.vals.length;o++)nb.push(o);}
+   else{const b=d.vals.indexOf(d.base);if(st[i]>=b&&st[i]+1<d.vals.length)nb.push(st[i]+1);if(st[i]<=b&&st[i]>0)nb.push(st[i]-1);}
+   nb.forEach(o=>{const n=st.slice();n[i]=o;const k=key(n);if(!seen.has(k)){seen.add(k);H.push([cost(n),n]);}});});}
+ return{ok:0,ex,close:edits(dims,best[1])};}
+function edits(dims,st){const o=[];dims.forEach((d,i)=>{if(d.k==="s"){if(st[i])o.push(`swap “${d.name}” for “${d.vals[st[i]]}”`);}
+ else if(d.vals[st[i]]!==d.base)o.push(`${d.name}${d.k==="q"?" quantity":""}: ${d.base} → ${d.vals[st[i]]} (${Math.round(100*(d.vals[st[i]]-d.base)/d.base)>0?"+":""}${Math.round(100*(d.vals[st[i]]-d.base)/d.base)}%)`);});return o;}
+
+/* ---------- 3. reasoning + learning ---------- */
+function reason(r,m){const names=r.ings.map(i=>i.name),has=n=>names.includes(n),L=[];
+ const cooked=r.steps.some(s=>s.a==="cook");
+ const cat=has("rice")&&cooked?"rice dish":has("lentils")&&cooked?"lentil dish (dal / soup)":has("egg")?"egg dish":has("chicken")&&cooked?"chicken dish":has("potato")&&cooked?"potato dish":null;
+ if(cat){L.push([`category = ${cat}`,"a main ingredient is present and a cook() step exists"]);
+  if(!has("salt"))L.push(["suggest: add salt","savoury dishes are normally salted"]);}
+ const under=Object.entries(D.MIN).filter(([n,v])=>has(n)&&cooked&&m.cook_time<v);
+ return{L,under};}
+function raiseTime(r,need){const tot=measure(r).cook_time;for(let i=r.steps.length-1;i>=0;i--)for(const a of r.steps[i].args)if(a.t){a.v=Math.ceil(a.v*TS[a.u]/60+(need-tot));a.u="minutes";return true;}return false;}
+
+
+let pending="";
+const sec=(t,items,w)=>`<div class="sec${w?" w":""}"><h3>${t}</h3>${items.length?"<ul>"+items.map(i=>"<li>"+i+"</li>").join("")+"</ul>":"<span class=mute>nothing to report</span>"}</div>`;
+function contractsHtml(r,m){return`<table><tr><th>Contract</th><th>Actual</th><th>Verdict</th></tr>`+verify(r,m).map(v=>`<tr><td>${esc(v.c.metric+" "+v.c.op+" "+v.c.value+(v.c.unit?" "+v.c.unit:""))}</td><td>${fv(v.c.metric,v.a)}</td><td><span class="pill ${v.ok?"pass":"fail"}">${v.ok?"PASS":"FAIL"}</span></td></tr>`).join("")+"</table>";}
+function goalsReport(r,html){
+ if(!r.contracts.length){html.push(sec("Goals (ENSURE)",["No ENSURE lines in this recipe."]));return r;}
+ const m=measure(r);const vs=verify(r,m);html.push(`<div class="sec"><h3>Contract verification</h3>${contractsHtml(r,m)}</div>`);
+ const bad=vs.filter(v=>!v.ok);if(!bad.length){html.push(sec("Result",["All contracts are proven for this recipe."]));return r;}
+ html.push(sec("Blame attribution",bad.map(v=>`<b>${esc(v.c.metric)}</b> (${fv(v.c.metric,v.a)}): `+blame(r,v.c).map(b=>`${esc(b[0])} ${b[2].toFixed(0)}%`).join(", ")),1));
+ const t=tune(r,.5);
+ if(t.ok){const m2=measure(t.n);html.push(sec(`Auto-tuner: cheapest fix (explored ${t.ex} candidates, cost ${t.c.toFixed(2)})`,t.edits));
+  html.push(`<div class="sec"><h3>Re-verification</h3>${contractsHtml(t.n,m2)}</div>`);return t.n;}
+ html.push(sec("Auto-tuner",[t.budget?"Search budget exhausted; try looser goals.":`Explored all ${t.ex} reachable recipes: no allowed edit meets every goal.`,...(t.close&&t.close.length?["Closest attempt: "+t.close.join("; ")]:[])],1));return r;}
+function smart(src){
+ const html=[],log=[];let text=fixSource(src,log);let r=parse(text);
+ if(r.errors.length){html.push(sec("Auto-fix: parse problems remain",r.errors.map(esc),1));return{html,r:null};}
+ fixMeaning(r,log);const ok=fixFlow(r,log);
+ html.push(sec(`1. Auto error detection and fixing (${log.length} fix${log.length==1?"":"es"})`,log.map(esc),!ok));
+ if(!r.name||!r.steps.length){html.push(sec("Cannot continue",["Recipe has no name or steps."],1));return{html,r:null};}
+ let m=measure(r),rs=reason(r,m);
+ const dec=[];if(rs.under.length){const need=Math.max(...rs.under.map(x=>x[1]));if(raiseTime(r,need)){dec.push(`<b>Decision:</b> ${rs.under.map(x=>x[0]).join(", ")} needs at least ${need} min but cooks ${m.cook_time.toFixed(0)} min → cooking time raised`);m=measure(r);rs=reason(r,m);}}
+ html.push(sec("2. Reasoning",[...dec,...rs.L.map(x=>`${esc(x[0])} <span class="mute">because ${esc(x[1])}</span>`)]));
+ const names=r.ings.map(i=>i.name),ex=expectedCook(names),lr=[];
+ if(ex){const d=Math.abs(m.cook_time-ex.e)<=ex.tol?"typical":m.cook_time>ex.e?"much longer than usual":"much shorter than usual";lr.push(`cooking time ${m.cook_time.toFixed(0)} min vs expected ${ex.e.toFixed(0)} ± ${ex.tol.toFixed(0)} min (${ex.n} similar recipes) → <b>${d}</b>`);}
+ const cnt={};D.CORPUS.forEach(c=>c.i.forEach(i=>cnt[i]=(cnt[i]||0)+1));const sug={};
+ names.forEach(x=>{const w=D.CORPUS.filter(c=>c.i.includes(x));if(w.length<3)return;const co={};w.forEach(c=>c.i.forEach(y=>co[y]=(co[y]||0)+1));
+  Object.entries(co).forEach(([y,n])=>{if(!names.includes(y)&&n>=3&&n/w.length>=.7&&(!sug[y]||sug[y][0]<n/w.length))sug[y]=[n/w.length,x,w.length];});});
+ Object.entries(sug).sort((a,b)=>b[1][0]-a[1][0]).slice(0,3).forEach(([y,v])=>lr.push(`suggestion: add “${y}”? ${Math.round(v[0]*100)}% of ${v[2]} remembered recipes with “${v[1]}” use it`));
+ html.push(sec("3. Learning (17-recipe memory)",lr));
+ if(r.contracts.length){const before=r;r=goalsReport(r,html);}
+ return{html,r};}
+
+function view(kind,src){const html=[];let res;
+ if(kind==="smart")res=smart(src);
+ else{const r=parse(fixSource(src,[]));
+  if(r.errors.length){html.push(sec("Parse problems",r.errors.map(esc),1));res={html,r:null};}
+  else{const out=goalsReport(r,html);res={html,r:r.contracts.length?out:null};}}
+ pending=res.r?unparse(res.r):"";
+ let h=res.html.join("");
+ if(res.r){h+=`<div class="sec"><h3>Resulting program</h3><pre>${esc(pending)}</pre></div>`;if(pending.trim()!==src.trim())h+=`<button class="run" id="xapply">Apply to editor</button>`;}
+ return h;}
+return{view,pending:()=>pending};
+})();
+src.value=EX["TomatoRice (valid)"];compile();
+</script></body></html>

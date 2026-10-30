@@ -1,0 +1,17 @@
+RECIPE ProteinBowl
+SERVES 2
+DIET vegetarian
+ENSURE protein_per_serving >= 22
+ENSURE calories_per_serving <= 600
+INGREDIENT rice = 2 cups
+INGREDIENT cheese = 60 g
+INGREDIENT oil = 2 tbsp
+INGREDIENT tomato = 2
+
+STEP heat_pan()
+STEP add(oil)
+STEP add(tomato)
+STEP add(rice)
+STEP add(cheese)
+STEP cook(12 minutes)
+STEP serve()

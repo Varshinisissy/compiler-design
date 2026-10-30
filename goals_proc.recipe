@@ -1,0 +1,16 @@
+RECIPE SpicyGoal
+SERVES 4
+ENSURE cook_time <= 12 minutes
+ENSURE calories_per_serving <= 300
+INGREDIENT rice = 2 cups
+INGREDIENT oil = 2 tbsp
+INGREDIENT cumin = 1 tsp
+DEFINE simmer(duration)
+  STEP cook(duration)
+  STEP stir()
+END
+STEP heat_pan()
+STEP add(oil)
+STEP add(rice)
+CALL simmer(15 minutes)
+STEP serve()

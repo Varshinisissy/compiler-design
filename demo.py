@@ -21,10 +21,18 @@ from repair import try_repair, unparse
 from expander import describe_call, describe_step
 from nutrition import analyze_nutrition
 from codegen import write_targets
+import contracts
+import smart
 import subprocess
 
 FAST = "--fast" in sys.argv
 FIX = "--fix" in sys.argv
+SMART = "--smart" in sys.argv
+NOLEARN = "--no-learn" in sys.argv
+MEM = smart.Memory() if SMART else None
+TUNE_LIMIT = 0.5
+if "--limit" in sys.argv:
+    TUNE_LIMIT = int(sys.argv[sys.argv.index("--limit") + 1]) / 100
 
 
 def banner(title, what, why):
@@ -56,6 +64,25 @@ def run(filepath, target_serves=None):
     for i, line in enumerate(source.splitlines(), start=1):
         print(f"    {i:>2} | {line}")
     pause()
+
+    # ---- Smart compiler (NEW) ----
+    if SMART:
+        banner("NEW: SMART COMPILER (reasoning, learning, adaptive, auto-fix)",
+               "Before normal compilation the compiler detects and repairs errors on 3 levels,\n"
+               "                      reasons about the recipe, learns from past recipes and adapts.",
+               "An ordinary compiler stops at the first error. A smart one decides and repairs.")
+        fixed_src, _smart_ast, smart_ok = smart.run_smart(source, MEM, learn=not NOLEARN)
+        if not smart_ok:
+            print("\n  Pipeline STOPPED: the smart compiler could not repair every problem.")
+            return
+        if fixed_src != source:
+            source = fixed_src
+            spath = filepath.rsplit(".", 1)[0] + "_smart.recipe"
+            with open(spath, "w", encoding="utf-8") as f:
+                f.write(source)
+            print(f"\n  Corrected program saved to: {spath}")
+            print("  The pipeline below continues with the CORRECTED program.")
+        pause()
 
     # ---- Stage 1 ----
     banner("STAGE 1: LEXICAL ANALYSIS (Lexer)",
@@ -96,7 +123,7 @@ def run(filepath, target_serves=None):
 
     # ---- Stage 3 ----
     banner("STAGE 3: SEMANTIC ANALYSIS",
-           "The AST is checked for meaning (8 rules, listed below).",
+           "The AST is checked for meaning (10 rules, listed below).",
            "A program can have correct grammar and still make no sense.")
     analyzer = SemanticAnalyzer(ast)
     symbol_table, errors = analyzer.analyze()
@@ -108,6 +135,8 @@ def run(filepath, target_serves=None):
     print("  Rule 6: REPEAT count (if present) is greater than 0")
     print("  Rule 7: DIET (if present) is known and no ingredient breaks it")
     print("  Rule 8: AVOID (if present) is a known allergen and no ingredient has it")
+    print("  Rule 9: every ENSURE contract uses a known metric / operator / unit")
+    print("  Rule 10: every PROTECT names a declared ingredient")
     print()
     if errors:
         print(f"  RESULT: {len(errors)} semantic error(s) found:")
@@ -150,10 +179,30 @@ def run(filepath, target_serves=None):
             for err in errors:
                 print(f"    - {err}")
             return
-        print("  RE-CHECK: the repaired program passes all 8 semantic rules.")
+        print("  RE-CHECK: the repaired program passes all 10 semantic rules.")
     else:
-        print("  RESULT: All 8 rules passed.")
+        print("  RESULT: All 10 rules passed.")
     pause()
+
+    # ---- Recipe contracts + auto-tuner (NOVELTY) ----
+    if ast.contracts:
+        banner("NOVELTY: RECIPE CONTRACTS + GOAL-DIRECTED AUTO-TUNER",
+               "Each ENSURE goal is verified against the compiled recipe. If one fails, the\n"
+               "                      compiler searches for the CHEAPEST edit that satisfies all goals.",
+               "Design-by-contract for food: state the goal, let the compiler prove or fix it.")
+        tuned = contracts.report(ast, TUNE_LIMIT,
+                                 write_path=filepath.rsplit(".", 1)[0] + "_tuned.recipe")
+        if tuned is None:
+            print("\n  Pipeline STOPPED: the contracts cannot be met.")
+            return
+        if tuned is not ast:
+            ast = tuned
+            analyzer = SemanticAnalyzer(ast)
+            symbol_table, errors = analyzer.analyze()
+            if errors:
+                print("  Tuned program has semantic errors:", errors)
+                return
+        pause()
 
     # ---- Procedure expansion (new) ----
     if ast.procedures:
@@ -210,7 +259,10 @@ def run(filepath, target_serves=None):
     banner("NEW: IR OPTIMIZER",
            "Redundant instructions are removed or merged before execution.",
            "A shorter IR runs faster. This is the code optimization phase.")
-    opt, changes = optimize_ir(ir)
+    if SMART:
+        opt, changes, _info = smart.smart_optimize(ir, MEM, learn=False)
+    else:
+        opt, changes = optimize_ir(ir)
     if changes:
         for c in changes:
             print(f"  - {c}")
@@ -319,5 +371,5 @@ if __name__ == "__main__":
     if "--serves" in args:
         serves = int(args[args.index("--serves") + 1])
     files = [a for i, a in enumerate(args)
-             if not a.startswith("--") and not (i > 0 and args[i - 1] == "--serves")]
+             if not a.startswith("--") and not (i > 0 and args[i - 1] in ("--serves", "--limit"))]
     run(files[0] if files else "sample_input.recipe", serves)
